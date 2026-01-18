@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Dealership Admin</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, button { display: block; width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #2563eb; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #1d4ed8; }
+        .vehicle-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .delete-btn { background: #ef4444; width: auto; padding: 5px 10px; font-size: 12px; }
+        .tag { font-size: 12px; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1> Virtual Dealership Control</h1>
+
+    <div class="card">
+        <h3>Add New Vehicle</h3>
+        <form id="vehicleForm">
+            <input type="text" id="title" placeholder="Vehicle Name (e.g. Tesla Model 3)" required>
+            <input type="number" id="price" placeholder="Price ($)" required>
+            <select id="category">
+                <option value="Sedan">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="Sport">Sport</option>
+                <option value="Electric">Electric</option>
+            </select>
+            <button type="submit">Add to Inventory</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Current Inventory</h3>
+        <div id="vehicleList">Loading...</div>
+    </div>
+
+    <script>
+        const API_URL = '/api/vehicles';
+
+        async function fetchVehicles() {
+            const res = await fetch(API_URL);
+            const data = await res.json();
+            const container = document.getElementById('vehicleList');
+            
+            if (data.length === 0) {
+                container.innerHTML = 'Inventory is empty.';
+                return;
+            }
+
+            container.innerHTML = data.map(v => `
+                <div class="vehicle-item">
+                    <div>
+                        <strong>${v.title}</strong> <span class="tag">${v.category}</span><br>
+                        <small>$${v.price.toLocaleString()}</small>
+                    </div>
+                    <button class="delete-btn" onclick="deleteVehicle('${v._id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('vehicleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const newVehicle = {
+                title: document.getElementById('title').value,
+                price: Number(document.getElementById('price').value),
+                category: document.getElementById('category').value
+            };
+
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newVehicle)
+            });
+
+            if (res.ok) {
+                e.target.reset();
+                fetchVehicles();
+            } else {
+                alert('Error adding vehicle');
+            }
+        });
+
+        async function deleteVehicle(id) {
+            if (confirm('Are you sure?')) {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                fetchVehicles();
+            }
+        }
+
+        fetchVehicles();
+    </script>
+</body>
+</html>
