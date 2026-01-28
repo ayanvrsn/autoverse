@@ -3,22 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Dealership Admin</title>
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, button { display: block; width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background: #2563eb; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #1d4ed8; }
-        .vehicle-item { border-bottom: 1px solid #eee; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
-        .delete-btn { background: #ef4444; width: auto; padding: 5px 10px; font-size: 12px; }
-        .tag { font-size: 12px; background: #e5e7eb; padding: 2px 6px; border-radius: 4px; }
-    </style>
+    <title>Virtual Dealership </title>
+    
 </head>
 <body>
 
     <h1> Virtual Dealership Control</h1>
-
+    <div class="sketchfab-embed-wrapper"> <iframe title="Tesla - Cybertruck" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share src="https://sketchfab.com/models/5a86defda4b24836a504fe5e597fdb17/embed?autospin=1&autostart=1&preload=1&transparent=1&ui_theme=dark&dnt=1"> </iframe> </div>
     <div class="card">
         <h3>Add New Vehicle</h3>
         <form id="vehicleForm">
@@ -40,7 +31,7 @@
     </div>
 
     <script>
-        const API_URL = '/api/vehicles';
+        const API_URL = '/auth';
 
         async function fetchVehicles() {
             const res = await fetch(API_URL);
