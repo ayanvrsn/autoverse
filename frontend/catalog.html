@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Car Catalog - AutoVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <i class="fas fa-car-side"></i>
+                AutoVerse
+            </a>
+            
+            <div class="navbar-menu">
+                <a href="index.html">Home</a>
+                <a href="catalog.html" class="active">Catalog</a>
+                <a href="admin.html" class="admin-link" style="display: none;">Admin</a>
+            </div>
+
+            <div class="navbar-actions">
+                <a href="cart.html" class="cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" style="display: none;">0</span>
+                </a>
+                
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+                    <a href="signup.html" class="btn btn-primary btn-sm">Sign Up</a>
+                </div>
+
+                <div class="user-menu" style="display: none;">
+                    <a href="profile.html" class="btn btn-outline btn-sm">
+                        <i class="fas fa-user"></i>
+                        Profile
+                    </a>
+                    <button class="btn btn-sm logout-btn">Logout</button>
+                </div>
+
+                <button class="mobile-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section style="background: var(--secondary); color: white; padding: 3rem 0;">
+        <div class="container">
+            <h1><i class="fas fa-cube"></i> 3D Car Catalog</h1>
+            <p style="color: var(--gray-400);">Browse our collection with interactive 3D viewing</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="cars-section">
+        <div class="container">
+            <!-- Search & Filters -->
+            <div class="search-filters">
+                <div class="search-bar">
+                    <div class="search-input">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Search by brand or model...">
+                    </div>
+                    <select class="filter-select" id="brand-filter">
+                        <option value="">All Brands</option>
+                    </select>
+                    <select class="filter-select" id="sort-filter">
+                        <option value="newest">Newest First</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="name">Name A-Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Results Info -->
+            <div class="flex justify-between items-center mb-2">
+                <p class="text-gray" id="results-count">Loading cars...</p>
+            </div>
+
+            <!-- Cars Grid -->
+            <div class="cars-grid" id="cars-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 AutoVerse v2.0. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        let allCars = [];
+        let filteredCars = [];
+
+        // Load cars from API
+        async function loadCars() {
+            const container = document.getElementById('cars-grid');
+            const resultsCount = document.getElementById('results-count');
+            
+            try {
+                allCars = await CarsAPI.getAll();
+                filteredCars = [...allCars];
+                
+                // Populate brand filter
+                const brands = [...new Set(allCars.map(car => car.brand))];
+                const brandFilter = document.getElementById('brand-filter');
+                brands.forEach(brand => {
+                    const option = document.createElement('option');
+                    option.value = brand;
+                    option.textContent = brand;
+                    brandFilter.appendChild(option);
+                });
+
+                renderCars();
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="alert alert-danger" style="grid-column: 1/-1;">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Failed to load cars. Please try again later.
+                    </div>
+                `;
+                resultsCount.textContent = 'Error loading cars';
+            }
+        }
+
+        // Render cars
+        function renderCars() {
+            const container = document.getElementById('cars-grid');
+            const resultsCount = document.getElementById('results-count');
+
+            if (filteredCars.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center" style="grid-column: 1/-1; padding: 4rem;">
+                        <i class="fas fa-search fa-3x text-gray mb-2"></i>
+                        <h3>No cars found</h3>
+                        <p class="text-gray">Try adjusting your filters</p>
+                    </div>
+                `;
+                resultsCount.textContent = 'No cars found';
+                return;
+            }
+
+            resultsCount.textContent = `Showing ${filteredCars.length} car${filteredCars.length !== 1 ? 's' : ''} with 3D viewing`;
+
+            container.innerHTML = filteredCars.map(car => `
+                <div class="car-card">
+                    <div class="car-image">
+                        <img src="${car.heroImage}" alt="${car.brand} ${car.model}">
+                        <span class="car-badge"><i class="fas fa-cube"></i> 3D</span>
+                    </div>
+                    <div class="car-content">
+                        <h3 class="car-title">${car.brand} ${car.model}</h3>
+                        <p class="car-year">${car.year}</p>
+                        <p class="car-price">${UI.formatPrice(car.basePrice)} <span>starting</span></p>
+                        <div class="car-actions">
+                            <a href="car.html?id=${car._id}" class="btn btn-primary" style="flex: 1;">
+                                <i class="fas fa-cube"></i> View in 3D
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter and sort cars
+        function filterCars() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const brand = document.getElementById('brand-filter').value;
+            const sort = document.getElementById('sort-filter').value;
+
+            filteredCars = allCars.filter(car => {
+                const matchesSearch = !search || 
+                    car.brand.toLowerCase().includes(search) || 
+                    car.model.toLowerCase().includes(search);
+                const matchesBrand = !brand || car.brand === brand;
+                return matchesSearch && matchesBrand;
+            });
+
+            // Sort
+            switch (sort) {
+                case 'price-low':
+                    filteredCars.sort((a, b) => a.basePrice - b.basePrice);
+                    break;
+                case 'price-high':
+                    filteredCars.sort((a, b) => b.basePrice - a.basePrice);
+                    break;
+                case 'name':
+                    filteredCars.sort((a, b) => `${a.brand} ${a.model}`.localeCompare(`${b.brand} ${b.model}`));
+                    break;
+                case 'newest':
+                default:
+                    filteredCars.sort((a, b) => b.year - a.year);
+            }
+
+            renderCars();
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', filterCars);
+        document.getElementById('brand-filter').addEventListener('change', filterCars);
+        document.getElementById('sort-filter').addEventListener('change', filterCars);
+
+        // Initialize
+        loadCars();
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - AutoVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <i class="fas fa-car-side"></i>
+                AutoVerse
+            </a>
+            
+            <div class="navbar-menu">
+                <a href="index.html">Home</a>
+                <a href="catalog.html">Catalog</a>
+                <a href="admin.html" class="admin-link" style="display: none;">Admin</a>
+            </div>
+
+            <div class="navbar-actions">
+                <a href="cart.html" class="cart-icon" style="color: var(--primary);">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-badge" style="display: none;">0</span>
+                </a>
+                
+                <div class="auth-buttons">
+                    <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+                    <a href="signup.html" class="btn btn-primary btn-sm">Sign Up</a>
+                </div>
+
+                <div class="user-menu" style="display: none;">
+                    <a href="profile.html" class="btn btn-outline btn-sm">
+                        <i class="fas fa-user"></i>
+                        Profile
+                    </a>
+                    <button class="btn btn-sm logout-btn">Logout</button>
+                </div>
+
+                <button class="mobile-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="cart-page">
+        <div class="container">
+            <div class="cart-header">
+                <h1><i class="fas fa-shopping-cart"></i> Shopping Cart</h1>
+                <p class="text-gray" id="cart-count">Loading...</p>
+            </div>
+
+            <div class="cart-content" id="cart-content">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 AutoVerse v2.0. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        async function loadCart() {
+            const container = document.getElementById('cart-content');
+            const cartCount = document.getElementById('cart-count');
+
+            // Check if user is logged in
+            if (!Auth.isLoggedIn()) {
+                container.innerHTML = `
+                    <div class="cart-items" style="grid-column: 1/-1;">
+                        <div class="cart-empty">
+                            <i class="fas fa-user-lock"></i>
+                            <h3>Please Log In</h3>
+                            <p>You need to be logged in to view your cart</p>
+                            <a href="login.html" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Log In
+                            </a>
+                        </div>
+                    </div>
+                `;
+                cartCount.textContent = 'Please log in to view your cart';
+                return;
+            }
+
+            try {
+                const cart = await CartAPI.get();
+                const items = cart.items || [];
+                
+                cartCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''} in your cart`;
+                UI.updateCartBadge();
+
+                if (items.length === 0) {
+                    container.innerHTML = `
+                        <div class="cart-items" style="grid-column: 1/-1;">
+                            <div class="cart-empty">
+                                <i class="fas fa-shopping-cart"></i>
+                                <h3>Your Cart is Empty</h3>
+                                <p>Explore our 3D catalog and add your dream car</p>
+                                <a href="catalog.html" class="btn btn-primary">
+                                    <i class="fas fa-cube"></i>
+                                    Browse 3D Catalog
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Calculate total
+                const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
+                const tax = subtotal * 0.08;
+                const total = subtotal + tax;
+
+                container.innerHTML = `
+                    <div class="cart-items">
+                        ${items.map((item, index) => {
+                            const car = item.carId || {};
+                            const config = item.configurationId || {};
+                            return `
+                                <div class="cart-item">
+                                    <div class="cart-item-image">
+                                        <img src="${car.heroImage || 'https://via.placeholder.com/200x150'}" alt="${car.brand || ''} ${car.model || ''}">
+                                    </div>
+                                    <div class="cart-item-details">
+                                        <h3 class="cart-item-title">${car.brand || 'Vehicle'} ${car.model || ''}</h3>
+                                        <p class="cart-item-config">
+                                            <span class="badge badge-primary">${config.name || 'Standard'}</span>
+                                            ${car.year || ''}
+                                        </p>
+                                        <p class="cart-item-price">${UI.formatPrice(item.price || 0)}</p>
+                                    </div>
+                                    <button class="cart-item-remove" data-index="${index}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="cart-summary">
+                        <h3>Order Summary</h3>
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span>${UI.formatPrice(subtotal)}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Tax (8%)</span>
+                            <span>${UI.formatPrice(tax)}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span style="color: var(--success);">FREE</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span>${UI.formatPrice(total)}</span>
+                        </div>
+                        <button class="btn btn-primary btn-block btn-lg" id="checkout-btn">
+                            <i class="fas fa-credit-card"></i>
+                            Place Order
+                        </button>
+                        <a href="catalog.html" class="btn btn-outline btn-block mt-2">
+                            <i class="fas fa-arrow-left"></i>
+                            Continue Shopping
+                        </a>
+                    </div>
+                `;
+
+                // Remove item handlers
+                document.querySelectorAll('.cart-item-remove').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const index = btn.dataset.index;
+                        try {
+                            await CartAPI.removeItem(index);
+                            UI.showToast('Item removed from cart', 'success');
+                            loadCart();
+                        } catch (error) {
+                            UI.showToast(error.message, 'error');
+                        }
+                    });
+                });
+
+                // Checkout handler
+                document.getElementById('checkout-btn').addEventListener('click', async () => {
+                    try {
+                        await OrdersAPI.create();
+                        UI.showToast('Order placed successfully!', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'profile.html';
+                        }, 1500);
+                    } catch (error) {
+                        UI.showToast(error.message, 'error');
+                    }
+                });
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="cart-items" style="grid-column: 1/-1;">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${error.message || 'Failed to load cart'}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        loadCart();
+    </script>
+</body>
+</html>

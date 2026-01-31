@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - AutoVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="form-container">
+            <a href="index.html" class="auth-logo">
+                <i class="fas fa-car-side"></i>
+                AutoVerse
+            </a>
+            
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>Create Account</h2>
+                    <p>Join us to experience 3D car shopping</p>
+                </div>
+
+                <div id="error-message" class="alert alert-danger hidden">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span></span>
+                </div>
+
+                <div id="success-message" class="alert alert-success hidden">
+                    <i class="fas fa-check-circle"></i>
+                    <span></span>
+                </div>
+
+                <form id="signup-form">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="form-control" 
+                            placeholder="Enter your email"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-control" 
+                            placeholder="Create a password (6-20 characters)"
+                            required
+                            minlength="6"
+                            maxlength="20"
+                        >
+                        <small class="text-gray">Password must be 6-20 characters long</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="confirm-password" 
+                            name="confirm-password" 
+                            class="form-control" 
+                            placeholder="Confirm your password"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="signup-btn">
+                        <span>Create Account</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="form-footer">
+                    Already have an account? <a href="login.html">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (Auth.isLoggedIn()) {
+            window.location.href = 'catalog.html';
+        }
+
+        const form = document.getElementById('signup-form');
+        const errorDiv = document.getElementById('error-message');
+        const successDiv = document.getElementById('success-message');
+        const signupBtn = document.getElementById('signup-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            // Reset messages
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                errorDiv.querySelector('span').textContent = 'Passwords do not match';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Validate password length
+            if (password.length < 6 || password.length > 20) {
+                errorDiv.querySelector('span').textContent = 'Password must be 6-20 characters long';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            signupBtn.disabled = true;
+            signupBtn.innerHTML = '<span>Creating account...</span> <i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                await AuthAPI.register(email, password);
+                
+                successDiv.querySelector('span').textContent = 'Account created successfully! Redirecting...';
+                successDiv.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    window.location.href = 'catalog.html';
+                }, 1500);
+            } catch (error) {
+                errorDiv.querySelector('span').textContent = error.message;
+                errorDiv.classList.remove('hidden');
+                signupBtn.disabled = false;
+                signupBtn.innerHTML = '<span>Create Account</span> <i class="fas fa-arrow-right"></i>';
+            }
+        });
+    </script>
+</body>
+</html>

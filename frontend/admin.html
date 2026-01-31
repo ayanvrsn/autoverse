@@ -3,18 +3,591 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Page</title>
+    <title>Admin Dashboard - AutoVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div>
-        <h1>Dealership admin</h1>
-    <form>
-    <input type="text" id="" placeholder="Brand" required>
-    <input type="text" id="car-model" placeholder="Model" required>
-    <input type="number" id="car-year" placeholder="year" required>
-    <input type="number" id="car-price" placeholder="BasePrice" required>
-    <button>Add to Inventory</button>
-        </form>
-    </div> 
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">
+                <i class="fas fa-car-side"></i>
+                AutoVerse
+            </a>
+            
+            <div class="navbar-menu">
+                <a href="index.html">Home</a>
+                <a href="catalog.html">Catalog</a>
+                <a href="admin.html" class="active">Admin</a>
+            </div>
+
+            <div class="navbar-actions">
+                <div class="user-menu">
+                    <span style="color: var(--gray-600); font-weight: 500;">
+                        <i class="fas fa-user-shield"></i> Admin
+                    </span>
+                    <button class="btn btn-sm logout-btn">Logout</button>
+                </div>
+
+                <button class="mobile-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Layout -->
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-menu">
+                <a href="#" class="sidebar-item active" data-tab="overview">
+                    <i class="fas fa-chart-line"></i>
+                    Overview
+                </a>
+                <a href="#" class="sidebar-item" data-tab="cars">
+                    <i class="fas fa-car"></i>
+                    Cars
+                </a>
+                <a href="#" class="sidebar-item" data-tab="configs">
+                    <i class="fas fa-cogs"></i>
+                    Configurations
+                </a>
+                <a href="#" class="sidebar-item" data-tab="orders">
+                    <i class="fas fa-receipt"></i>
+                    Orders
+                </a>
+                <a href="#" class="sidebar-item" data-tab="users">
+                    <i class="fas fa-users"></i>
+                    Users
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="dashboard-content">
+            <!-- Overview Tab -->
+            <div id="overview-tab">
+                <div class="dashboard-header">
+                    <h2>Dashboard Overview</h2>
+                    <button class="btn btn-primary" id="refresh-btn">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="fas fa-car"></i></div>
+                        <div class="stat-info">
+                            <h4 id="total-cars">0</h4>
+                            <p>Total Cars</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-cogs"></i></div>
+                        <div class="stat-info">
+                            <h4 id="total-configs">0</h4>
+                            <p>Configurations</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fas fa-users"></i></div>
+                        <div class="stat-info">
+                            <h4 id="total-users">0</h4>
+                            <p>Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon red"><i class="fas fa-receipt"></i></div>
+                        <div class="stat-info">
+                            <h4 id="total-orders">0</h4>
+                            <p>Orders</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cars Tab -->
+            <div id="cars-tab" style="display: none;">
+                <div class="dashboard-header">
+                    <h2>Manage Cars</h2>
+                    <button class="btn btn-primary" id="add-car-btn">
+                        <i class="fas fa-plus"></i> Add Car
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <div id="cars-table">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configs Tab -->
+            <div id="configs-tab" style="display: none;">
+                <div class="dashboard-header">
+                    <h2>Car Configurations</h2>
+                    <button class="btn btn-primary" id="add-config-btn">
+                        <i class="fas fa-plus"></i> Add Configuration
+                    </button>
+                </div>
+
+                <div class="alert alert-warning mb-2">
+                    <i class="fas fa-info-circle"></i>
+                    Each car must have exactly 3 configurations (Base, Performance, Premium)
+                </div>
+
+                <div class="table-container">
+                    <div id="configs-table">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div id="orders-tab" style="display: none;">
+                <div class="dashboard-header">
+                    <h2>Manage Orders</h2>
+                </div>
+
+                <div class="table-container">
+                    <div id="orders-table">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" style="display: none;">
+                <div class="dashboard-header">
+                    <h2>Manage Users</h2>
+                </div>
+
+                <div class="table-container">
+                    <div id="users-table">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Car Modal -->
+    <div class="modal-overlay" id="car-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="car-modal-title">Add New Car</h3>
+                <button class="modal-close" onclick="closeModal('car-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="car-form">
+                <div class="modal-body">
+                    <input type="hidden" id="car-id">
+                    <div class="form-group">
+                        <label>Brand</label>
+                        <input type="text" id="car-brand" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Model</label>
+                        <input type="text" id="car-model" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="number" id="car-year" class="form-control" min="2000" max="2030" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Base Price ($)</label>
+                        <input type="number" id="car-price" class="form-control" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hero Image URL</label>
+                        <input type="url" id="car-heroImage" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('car-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Car</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Config Modal -->
+    <div class="modal-overlay" id="config-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="config-modal-title">Add Configuration</h3>
+                <button class="modal-close" onclick="closeModal('config-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="config-form">
+                <div class="modal-body">
+                    <input type="hidden" id="config-id">
+                    <div class="form-group">
+                        <label>Car</label>
+                        <select id="config-carId" class="form-control" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Configuration Name</label>
+                        <select id="config-name" class="form-control" required>
+                            <option value="Base">Base</option>
+                            <option value="Performance">Performance</option>
+                            <option value="Premium">Premium</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Price ($)</label>
+                        <input type="number" id="config-priceTotal" class="form-control" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Sketchfab Embed HTML</label>
+                        <textarea id="config-sketchfabEmbedHtml" class="form-control" rows="4" placeholder='<iframe src="https://sketchfab.com/models/.../embed" frameborder="0" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>' required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Engine</label>
+                        <input type="text" id="config-engine" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="text" id="config-color" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Interior</label>
+                        <input type="text" id="config-interior" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('config-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Check admin access
+        if (!Auth.isLoggedIn() || !Auth.isAdmin()) {
+            window.location.href = 'login.html';
+        }
+
+        let allCars = [];
+        let allConfigs = [];
+
+        // Modal helpers
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Tab switching
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tab = item.dataset.tab;
+                
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+
+                document.querySelectorAll('[id$="-tab"]').forEach(t => t.style.display = 'none');
+                document.getElementById(`${tab}-tab`).style.display = 'block';
+            });
+        });
+
+        // Load dashboard
+        async function loadDashboard() {
+            try {
+                allCars = await CarsAPI.getAll();
+                document.getElementById('total-cars').textContent = allCars.length;
+                renderCarsTable();
+                populateCarSelect();
+
+                try {
+                    allConfigs = await ConfigAPI.getAll();
+                    document.getElementById('total-configs').textContent = allConfigs.length;
+                    renderConfigsTable();
+                } catch (e) {}
+
+                try {
+                    const users = await AuthAPI.getUsers();
+                    document.getElementById('total-users').textContent = users.length;
+                    renderUsersTable(users);
+                } catch (e) {}
+
+                try {
+                    const orders = await OrdersAPI.getAllAdmin();
+                    document.getElementById('total-orders').textContent = orders.length;
+                    renderOrdersTable(orders);
+                } catch (e) {}
+            } catch (error) {
+                UI.showToast('Failed to load data', 'error');
+            }
+        }
+
+        function renderCarsTable() {
+            const container = document.getElementById('cars-table');
+            if (allCars.length === 0) {
+                container.innerHTML = '<div style="padding:2rem;text-align:center;">No cars found</div>';
+                return;
+            }
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Brand</th>
+                                <th>Model</th>
+                                <th>Year</th>
+                                <th>Base Price</th>
+                                <th>Configs</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allCars.map(car => {
+                                const configCount = allConfigs.filter(c => c.carId?._id === car._id || c.carId === car._id).length;
+                                return `
+                                <tr>
+                                    <td><strong>${car.brand}</strong></td>
+                                    <td>${car.model}</td>
+                                    <td>${car.year}</td>
+                                    <td>${UI.formatPrice(car.basePrice)}</td>
+                                    <td>
+                                        <span class="badge ${configCount === 3 ? 'badge-success' : 'badge-warning'}">
+                                            ${configCount}/3
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline" onclick="editCar('${car._id}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteCar('${car._id}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderConfigsTable() {
+            const container = document.getElementById('configs-table');
+            if (allConfigs.length === 0) {
+                container.innerHTML = '<div style="padding:2rem;text-align:center;">No configurations found</div>';
+                return;
+            }
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Car</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Engine</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allConfigs.map(config => `
+                                <tr>
+                                    <td>${config.carId?.brand || ''} ${config.carId?.model || ''}</td>
+                                    <td><span class="badge badge-primary">${config.name}</span></td>
+                                    <td>${UI.formatPrice(config.priceTotal)}</td>
+                                    <td>${config.specs?.engine || ''}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteConfig('${config._id}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderOrdersTable(orders) {
+            const container = document.getElementById('orders-table');
+            if (!orders || orders.length === 0) {
+                container.innerHTML = '<div style="padding:2rem;text-align:center;">No orders found</div>';
+                return;
+            }
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr><th>Order ID</th><th>User</th><th>Total</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            ${orders.map(order => `
+                                <tr>
+                                    <td><code>${order._id.slice(-8)}</code></td>
+                                    <td>${order.userId?.email || 'N/A'}</td>
+                                    <td>${UI.formatPrice(order.totalAmount)}</td>
+                                    <td>
+                                        <select class="form-control" style="width:auto;padding:0.25rem;" onchange="updateOrderStatus('${order._id}', this.value)">
+                                            ${['pending','confirmed','shipped','delivered','cancelled'].map(s => 
+                                                `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s}</option>`
+                                            ).join('')}
+                                        </select>
+                                    </td>
+                                    <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderUsersTable(users) {
+            const container = document.getElementById('users-table');
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Email</th><th>Role</th><th>Created</th></tr></thead>
+                        <tbody>
+                            ${users.map(user => `
+                                <tr>
+                                    <td>${user.email}</td>
+                                    <td><span class="badge ${user.role === 'ADMIN' ? 'badge-danger' : 'badge-primary'}">${user.role}</span></td>
+                                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function populateCarSelect() {
+            const select = document.getElementById('config-carId');
+            select.innerHTML = allCars.map(car => 
+                `<option value="${car._id}">${car.brand} ${car.model}</option>`
+            ).join('');
+        }
+
+        // Car CRUD
+        document.getElementById('add-car-btn').addEventListener('click', () => {
+            document.getElementById('car-modal-title').textContent = 'Add New Car';
+            document.getElementById('car-form').reset();
+            document.getElementById('car-id').value = '';
+            openModal('car-modal');
+        });
+
+        function editCar(id) {
+            const car = allCars.find(c => c._id === id);
+            if (!car) return;
+            document.getElementById('car-modal-title').textContent = 'Edit Car';
+            document.getElementById('car-id').value = car._id;
+            document.getElementById('car-brand').value = car.brand;
+            document.getElementById('car-model').value = car.model;
+            document.getElementById('car-year').value = car.year;
+            document.getElementById('car-price').value = car.basePrice;
+            document.getElementById('car-heroImage').value = car.heroImage;
+            openModal('car-modal');
+        }
+
+        document.getElementById('car-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const carData = {
+                brand: document.getElementById('car-brand').value,
+                model: document.getElementById('car-model').value,
+                year: parseInt(document.getElementById('car-year').value),
+                basePrice: parseFloat(document.getElementById('car-price').value),
+                heroImage: document.getElementById('car-heroImage').value
+            };
+            const carId = document.getElementById('car-id').value;
+            try {
+                if (carId) await CarsAPI.update(carId, carData);
+                else await CarsAPI.create(carData);
+                closeModal('car-modal');
+                UI.showToast('Car saved successfully', 'success');
+                loadDashboard();
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            }
+        });
+
+        async function deleteCar(id) {
+            if (!confirm('Delete this car and all its configurations?')) return;
+            try {
+                await CarsAPI.delete(id);
+                UI.showToast('Car deleted', 'success');
+                loadDashboard();
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            }
+        }
+
+        // Config CRUD
+        document.getElementById('add-config-btn').addEventListener('click', () => {
+            document.getElementById('config-modal-title').textContent = 'Add Configuration';
+            document.getElementById('config-form').reset();
+            document.getElementById('config-id').value = '';
+            openModal('config-modal');
+        });
+
+        document.getElementById('config-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const configData = {
+                carId: document.getElementById('config-carId').value,
+                name: document.getElementById('config-name').value,
+                priceTotal: parseFloat(document.getElementById('config-priceTotal').value),
+                sketchfabEmbedHtml: document.getElementById('config-sketchfabEmbedHtml').value,
+                specs: {
+                    engine: document.getElementById('config-engine').value,
+                    color: document.getElementById('config-color').value,
+                    interior: document.getElementById('config-interior').value
+                }
+            };
+            try {
+                await ConfigAPI.create(configData);
+                closeModal('config-modal');
+                UI.showToast('Configuration saved', 'success');
+                loadDashboard();
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            }
+        });
+
+        async function deleteConfig(id) {
+            if (!confirm('Delete this configuration?')) return;
+            try {
+                await ConfigAPI.delete(id);
+                UI.showToast('Configuration deleted', 'success');
+                loadDashboard();
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            }
+        }
+
+        async function updateOrderStatus(id, status) {
+            try {
+                await OrdersAPI.updateStatus(id, status);
+                UI.showToast('Order status updated', 'success');
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            }
+        }
+
+        // Init
+        document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
+        document.querySelector('.mobile-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+        loadDashboard();
+    </script>
 </body>
 </html>
