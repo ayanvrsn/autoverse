@@ -1,7 +1,6 @@
 const Car = require('../models/Car');
 const Config = require('../models/Config');
 
-// Get all cars
 exports.getCars = async (req, res) => {
     try {
         const cars = await Car.find({ available: true });
@@ -24,18 +23,15 @@ exports.getCarById = async (req, res) => {
     }
 };
 
-// Get configurations for a specific car (3 configs per car)
 exports.getCarConfigs = async (req, res) => {
     try {
         const carId = req.params.id;
         
-        // Verify car exists
         const car = await Car.findById(carId);
         if (!car) {
             return res.status(404).json({ message: 'Car not found' });
         }
         
-        // Get all configurations for this car
         const configs = await Config.find({ carId }).sort({ priceTotal: 1 });
         res.json(configs);
     } catch (error) {
@@ -43,7 +39,6 @@ exports.getCarConfigs = async (req, res) => {
     }
 };
 
-// Create new car (Admin only)
 exports.createCar = async (req, res) => {
     try {
         const { brand, model, year, basePrice, heroImage, available } = req.body;
@@ -64,7 +59,6 @@ exports.createCar = async (req, res) => {
     }
 };
 
-// Update car (Admin only)
 exports.updateCar = async (req, res) => {
     try {
         const updated = await Car.findByIdAndUpdate(

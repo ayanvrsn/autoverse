@@ -21,7 +21,6 @@ module.exports = function(allowedRoles) {
             const decoded = jwt.verify(token, secret);
             req.user = decoded;
             
-            // Check if user's role is in allowed roles
             if (!allowedRoles.includes(decoded.role)) {
                 return res.status(403).json({ message: "Access denied. Insufficient permissions." });
             }

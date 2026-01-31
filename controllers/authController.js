@@ -56,12 +56,10 @@ class authController {
         }
     }
 
-    // Login user
     async login(req, res) {
         try {
             const { email, password } = req.body;
             
-            // Find user
             const user = await User.findOne({ email: email.toLowerCase() });
             if (!user) {
                 return res.status(400).json({ 
@@ -69,7 +67,6 @@ class authController {
                 });
             }
 
-            // Check password
             const isPasswordValid = await bcrypt.compare(password, user.password);
             if (!isPasswordValid) {
                 return res.status(400).json({ 
@@ -77,7 +74,6 @@ class authController {
                 });
             }
 
-            // Generate token
             const token = generateJwtToken(user._id, user.role);
             
             return res.json({ 
@@ -94,7 +90,6 @@ class authController {
         }
     }
 
-    // Get all users (admin only)
     async getUsers(req, res) {
         try {
             const users = await User.find({}, { password: 0 });
@@ -105,7 +100,6 @@ class authController {
         }
     }
 
-    // Get current user
     async getMe(req, res) {
         try {
             const user = await User.findById(req.user.id, { password: 0 });
