@@ -181,7 +181,6 @@ const ConfigAPI = {
     }
 };
 
-// ===== Cart API =====
 const CartAPI = {
     async get() {
         return apiRequest('/cart');
@@ -207,7 +206,6 @@ const CartAPI = {
     }
 };
 
-// ===== Orders API =====
 const OrdersAPI = {
     async getAll() {
         return apiRequest('/orders');
@@ -235,9 +233,7 @@ const OrdersAPI = {
     }
 };
 
-// ===== UI Helper Functions =====
 const UI = {
-    // Toast Notifications
     showToast(message, type = 'success') {
         let container = document.querySelector('.toast-container');
         if (!container) {
@@ -261,7 +257,6 @@ const UI = {
         }, 3000);
     },
 
-    // Loading Spinner
     showLoading(container) {
         container.innerHTML = `
             <div class="loading">
@@ -270,7 +265,6 @@ const UI = {
         `;
     },
 
-    // Format Currency
     formatPrice(price) {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -279,7 +273,6 @@ const UI = {
         }).format(price);
     },
 
-    // Update Cart Badge
     async updateCartBadge() {
         const badge = document.querySelector('.cart-badge');
         if (!badge || !Auth.isLoggedIn()) return;
@@ -294,7 +287,6 @@ const UI = {
         }
     },
 
-    // Check Auth and Redirect
     requireAuth() {
         if (!Auth.isLoggedIn()) {
             window.location.href = '/frontend/login.html';
@@ -303,7 +295,6 @@ const UI = {
         return true;
     },
 
-    // Check Admin and Redirect
     requireAdmin() {
         if (!Auth.isAdmin()) {
             window.location.href = '/frontend/catalog.html';
@@ -312,7 +303,6 @@ const UI = {
         return true;
     },
 
-    // Update Nav based on Auth Status
     updateNav() {
         const authButtons = document.querySelector('.auth-buttons');
         const userMenu = document.querySelector('.user-menu');
@@ -321,13 +311,11 @@ const UI = {
             if (authButtons) authButtons.style.display = 'none';
             if (userMenu) userMenu.style.display = 'flex';
             
-            // Show admin link if admin
             const adminLink = document.querySelector('.admin-link');
             if (adminLink) {
                 adminLink.style.display = Auth.isAdmin() ? 'block' : 'none';
             }
 
-            // Update cart badge
             this.updateCartBadge();
         } else {
             if (authButtons) authButtons.style.display = 'flex';
@@ -336,11 +324,9 @@ const UI = {
     }
 };
 
-// ===== Initialize on Page Load =====
 document.addEventListener('DOMContentLoaded', () => {
     UI.updateNav();
 
-    // Mobile menu toggle
     const mobileToggle = document.querySelector('.mobile-toggle');
     const navMenu = document.querySelector('.navbar-menu');
     
@@ -350,7 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Logout button
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {

@@ -11,12 +11,10 @@ const {
     getCarConfigs 
 } = require('../controllers/CarController');
 
-// Public routes
 router.get('/', getCars);
 router.get('/:id', getCarById);
 router.get('/:id/configs', getCarConfigs);
 
-// Admin only routes
 router.post('/', roleMiddleware(['ADMIN']), createCar);
 router.put('/:id', roleMiddleware(['ADMIN']), updateCar);
 router.delete('/:id', roleMiddleware(['ADMIN']), deleteCar);

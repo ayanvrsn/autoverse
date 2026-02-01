@@ -95,7 +95,7 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
+    
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
@@ -135,7 +135,7 @@
         </div>
     </nav>
 
-    <!-- Breadcrumb -->
+    
     <div style="background: var(--gray-100); padding: 1rem 0;">
         <div class="container">
             <nav style="display: flex; gap: 0.5rem; color: var(--gray-500); font-size: 0.875rem;">
@@ -148,7 +148,7 @@
         </div>
     </div>
 
-    <!-- Main Content -->
+    
     <main class="car-detail">
         <div class="container">
             <div id="car-content">
@@ -159,7 +159,7 @@
         </div>
     </main>
 
-    <!-- Footer -->
+    
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
@@ -203,7 +203,6 @@
             }
 
             try {
-                // Load car and configs in parallel
                 const [car, carConfigs] = await Promise.all([
                     CarsAPI.getById(carId),
                     CarsAPI.getConfigs(carId)
@@ -211,7 +210,7 @@
 
                 currentCar = car;
                 configs = carConfigs;
-                selectedConfig = configs[0]; // Select first config by default
+                selectedConfig = configs[0];
 
                 breadcrumb.textContent = `${car.brand} ${car.model}`;
                 document.title = `${car.brand} ${car.model} - 3D Configurator | AutoVerse`;
@@ -235,7 +234,7 @@
 
             container.innerHTML = `
                 <div class="car-detail-grid">
-                    <!-- Left: 3D Viewer -->
+                    
                     <div>
                         <div class="sketchfab-embed-wrapper" id="sketchfab-container">
                             ${viewerHtml}
@@ -245,12 +244,12 @@
                         </p>
                     </div>
 
-                    <!-- Right: Car Info & Config -->
+                    
                     <div class="car-info">
                         <h1>${currentCar.brand} ${currentCar.model}</h1>
                         <p class="year">${currentCar.year}</p>
 
-                        <!-- Configuration Selector -->
+                        
                         <h4 style="margin: 1.5rem 0 1rem;">
                             <i class="fas fa-sliders-h"></i> Choose Configuration
                         </h4>
@@ -263,12 +262,12 @@
                             `).join('')}
                         </div>
 
-                        <!-- Selected Config Specs -->
+                        
                         <div id="config-specs">
                             ${renderSpecs(selectedConfig)}
                         </div>
 
-                        <!-- Price & Actions -->
+                        
                         <div style="background: var(--light); padding: 1.5rem; border-radius: var(--radius-lg); margin: 2rem 0;">
                             <div class="flex justify-between items-center">
                                 <div>
@@ -280,7 +279,7 @@
                             </div>
                         </div>
 
-                        <!-- Actions -->
+                        
                         <div class="flex gap-2">
                             <button class="btn btn-primary btn-lg" id="add-to-cart-btn" style="flex: 1;">
                                 <i class="fas fa-cart-plus"></i>
@@ -291,7 +290,6 @@
                 </div>
             `;
 
-            // Setup event listeners
             setupConfigButtons();
             setupAddToCart();
         }
@@ -324,18 +322,14 @@
                     const index = parseInt(btn.dataset.index);
                     selectedConfig = configs[index];
 
-                    // Update active state
                     document.querySelectorAll('.config-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
 
-                    // Update 3D model (change iframe src)
                     const container = document.getElementById('sketchfab-container');
                     container.innerHTML = getEmbedHtml(selectedConfig);
 
-                    // Update specs
                     document.getElementById('config-specs').innerHTML = renderSpecs(selectedConfig);
 
-                    // Update price
                     document.getElementById('total-price').textContent = UI.formatPrice(selectedConfig.priceTotal);
                     document.getElementById('selected-config-name').textContent = selectedConfig.name;
                 });
@@ -359,7 +353,6 @@
             });
         }
 
-        // Initialize
         loadCarDetails();
     </script>
 </body>

@@ -87,7 +87,6 @@
 
     <script src="js/api.js"></script>
     <script>
-        // Redirect if already logged in
         if (Auth.isLoggedIn()) {
             window.location.href = 'catalog.html';
         }
@@ -104,18 +103,15 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
 
-            // Reset messages
             errorDiv.classList.add('hidden');
             successDiv.classList.add('hidden');
 
-            // Validate passwords match
             if (password !== confirmPassword) {
                 errorDiv.querySelector('span').textContent = 'Passwords do not match';
                 errorDiv.classList.remove('hidden');
                 return;
             }
 
-            // Validate password length
             if (password.length < 6 || password.length > 20) {
                 errorDiv.querySelector('span').textContent = 'Password must be 6-20 characters long';
                 errorDiv.classList.remove('hidden');

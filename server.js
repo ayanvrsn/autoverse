@@ -4,7 +4,6 @@ const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
 
-// Import routes
 const authRoutes = require('./routes/authRoutes');
 const carRoutes = require('./routes/carRoutes');
 const configRoutes = require('./routes/configRoutes');
@@ -40,6 +39,6 @@ const PORT = process.env.PORT
 ;
 app.listen(PORT, () => {
     console.log(`
-http://localhost:${PORT}/frontend  
+http:
     `);
 });

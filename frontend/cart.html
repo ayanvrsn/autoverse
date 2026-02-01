@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
+    
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
@@ -49,7 +49,7 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
+    
     <main class="cart-page">
         <div class="container">
             <div class="cart-header">
@@ -65,7 +65,7 @@
         </div>
     </main>
 
-    <!-- Footer -->
+    
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
@@ -80,7 +80,6 @@
             const container = document.getElementById('cart-content');
             const cartCount = document.getElementById('cart-count');
 
-            // Check if user is logged in
             if (!Auth.isLoggedIn()) {
                 container.innerHTML = `
                     <div class="cart-items" style="grid-column: 1/-1;">
@@ -123,7 +122,6 @@
                     return;
                 }
 
-                // Calculate total
                 const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
                 const tax = subtotal * 0.08;
                 const total = subtotal + tax;
@@ -183,7 +181,6 @@
                     </div>
                 `;
 
-                // Remove item handlers
                 document.querySelectorAll('.cart-item-remove').forEach(btn => {
                     btn.addEventListener('click', async () => {
                         const index = btn.dataset.index;
@@ -197,7 +194,6 @@
                     });
                 });
 
-                // Checkout handler
                 document.getElementById('checkout-btn').addEventListener('click', async () => {
                     try {
                         await OrdersAPI.create();
@@ -222,7 +218,6 @@
             }
         }
 
-        // Initialize
         loadCart();
     </script>
 </body>

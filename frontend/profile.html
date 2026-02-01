@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
+    
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
@@ -44,10 +44,10 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
+    
     <main class="profile-page">
         <div class="container">
-            <!-- Profile Header -->
+            
             <div class="profile-header">
                 <div class="profile-avatar" id="user-avatar">U</div>
                 <div class="profile-info">
@@ -56,7 +56,7 @@
                 </div>
             </div>
 
-            <!-- Dashboard Stats -->
+            
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon blue">
@@ -78,7 +78,7 @@
                 </div>
             </div>
 
-            <!-- Orders Section -->
+            
             <div class="table-container mt-4">
                 <div class="table-header">
                     <h3>My Orders</h3>
@@ -92,7 +92,7 @@
         </div>
     </main>
 
-    <!-- Footer -->
+    
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
@@ -103,12 +103,10 @@
 
     <script src="js/api.js"></script>
     <script>
-        // Check authentication
         if (!Auth.isLoggedIn()) {
             window.location.href = 'login.html';
         }
 
-        // Load user info
         function loadUserInfo() {
             const user = Auth.getUser();
             if (user) {
@@ -119,7 +117,6 @@
             }
         }
 
-        // Load cart count
         async function loadCartCount() {
             try {
                 const cart = await CartAPI.get();
@@ -130,7 +127,6 @@
             }
         }
 
-        // Load orders
         async function loadOrders() {
             const container = document.getElementById('orders-table');
             
@@ -199,7 +195,6 @@
             }
         }
 
-        // Initialize
         loadUserInfo();
         loadCartCount();
         loadOrders();

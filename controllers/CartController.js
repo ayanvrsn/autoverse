@@ -2,7 +2,6 @@ const Cart = require('../models/Cart');
 const Car = require('../models/Car');
 const Config = require('../models/Config');
 
-// Get user's cart
 exports.getCart = async (req, res) => {
     try {
         let cart = await Cart.findOne({ userId: req.user.id })
@@ -19,31 +18,26 @@ exports.getCart = async (req, res) => {
     }
 };
 
-// Add item to cart
 exports.addItemToCart = async (req, res) => {
     try {
         const { carId, configurationId } = req.body;
         const userId = req.user.id;
 
-        // Verify car exists
         const car = await Car.findById(carId);
         if (!car) {
             return res.status(404).json({ message: 'Car not found' });
         }
 
-        // Verify configuration exists and belongs to the car
         const config = await Config.findOne({ _id: configurationId, carId });
         if (!config) {
             return res.status(404).json({ message: 'Configuration not found for this car' });
         }
 
-        // Find or create cart
         let cart = await Cart.findOne({ userId });
         if (!cart) {
             cart = new Cart({ userId, items: [] });
         }
 
-        // Check if item already exists in cart
         const existingItem = cart.items.find(
             item => item.carId.toString() === carId && 
                     item.configurationId.toString() === configurationId
@@ -53,7 +47,6 @@ exports.addItemToCart = async (req, res) => {
             return res.status(400).json({ message: 'Item already in cart' });
         }
 
-        // Add item
         cart.items.push({
             carId,
             configurationId,
@@ -62,7 +55,6 @@ exports.addItemToCart = async (req, res) => {
 
         await cart.save();
         
-        // Return populated cart
         cart = await Cart.findOne({ userId })
             .populate('items.carId', 'brand model year heroImage')
             .populate('items.configurationId', 'name priceTotal specs');
@@ -73,7 +65,6 @@ exports.addItemToCart = async (req, res) => {
     }
 };
 
-// Remove item from cart
 exports.removeItem = async (req, res) => {
     try {
         const { itemIndex } = req.params;
@@ -92,7 +83,6 @@ exports.removeItem = async (req, res) => {
         cart.items.splice(index, 1);
         await cart.save();
 
-        // Return populated cart
         const updatedCart = await Cart.findOne({ userId })
             .populate('items.carId', 'brand model year heroImage')
             .populate('items.configurationId', 'name priceTotal specs');
@@ -103,7 +93,6 @@ exports.removeItem = async (req, res) => {
     }
 };
 
-// Clear cart
 exports.clearCart = async (req, res) => {
     try {
         const userId = req.user.id;

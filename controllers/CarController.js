@@ -10,7 +10,6 @@ exports.getCars = async (req, res) => {
     }
 };
 
-// Get car by ID
 exports.getCarById = async (req, res) => {
     try {
         const car = await Car.findById(req.params.id);
@@ -77,7 +76,6 @@ exports.updateCar = async (req, res) => {
     }
 };
 
-// Delete car (Admin only)
 exports.deleteCar = async (req, res) => {
     try {
         const car = await Car.findByIdAndDelete(req.params.id);
@@ -86,7 +84,6 @@ exports.deleteCar = async (req, res) => {
             return res.status(404).json({ message: 'Car not found' });
         }
         
-        // Also delete related configurations
         await Config.deleteMany({ carId: req.params.id });
         
         res.json({ message: 'Car and related configurations deleted' });

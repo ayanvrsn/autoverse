@@ -8,7 +8,6 @@ const {
     clearCart 
 } = require('../controllers/CartController');
 
-// All cart routes require authentication
 router.get('/', authMiddleware, getCart);
 router.post('/', authMiddleware, addItemToCart);
 router.delete('/item/:itemIndex', authMiddleware, removeItem);

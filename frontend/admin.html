@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
+    
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
@@ -38,9 +38,9 @@
         </div>
     </nav>
 
-    <!-- Dashboard Layout -->
+    
     <div class="dashboard">
-        <!-- Sidebar -->
+        
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-menu">
                 <a href="#" class="sidebar-item active" data-tab="overview">
@@ -66,9 +66,9 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
+        
         <main class="dashboard-content">
-            <!-- Overview Tab -->
+            
             <div id="overview-tab">
                 <div class="dashboard-header">
                     <h2>Dashboard Overview</h2>
@@ -109,7 +109,7 @@
                 </div>
             </div>
 
-            <!-- Cars Tab -->
+            
             <div id="cars-tab" style="display: none;">
                 <div class="dashboard-header">
                     <h2>Manage Cars</h2>
@@ -125,7 +125,7 @@
                 </div>
             </div>
 
-            <!-- Configs Tab -->
+            
             <div id="configs-tab" style="display: none;">
                 <div class="dashboard-header">
                     <h2>Car Configurations</h2>
@@ -146,7 +146,7 @@
                 </div>
             </div>
 
-            <!-- Orders Tab -->
+            
             <div id="orders-tab" style="display: none;">
                 <div class="dashboard-header">
                     <h2>Manage Orders</h2>
@@ -159,7 +159,7 @@
                 </div>
             </div>
 
-            <!-- Users Tab -->
+            
             <div id="users-tab" style="display: none;">
                 <div class="dashboard-header">
                     <h2>Manage Users</h2>
@@ -174,7 +174,7 @@
         </main>
     </div>
 
-    <!-- Add/Edit Car Modal -->
+    
     <div class="modal-overlay" id="car-modal">
         <div class="modal">
             <div class="modal-header">
@@ -215,7 +215,7 @@
         </div>
     </div>
 
-    <!-- Add/Edit Config Modal -->
+    
     <div class="modal-overlay" id="config-modal">
         <div class="modal">
             <div class="modal-header">
@@ -270,7 +270,6 @@
 
     <script src="js/api.js"></script>
     <script>
-        // Check admin access
         if (!Auth.isLoggedIn() || !Auth.isAdmin()) {
             window.location.href = 'login.html';
         }
@@ -278,7 +277,6 @@
         let allCars = [];
         let allConfigs = [];
 
-        // Modal helpers
         function openModal(id) {
             document.getElementById(id).classList.add('active');
         }
@@ -286,7 +284,6 @@
             document.getElementById(id).classList.remove('active');
         }
 
-        // Tab switching
         document.querySelectorAll('.sidebar-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -300,7 +297,6 @@
             });
         });
 
-        // Load dashboard
         async function loadDashboard() {
             try {
                 allCars = await CarsAPI.getAll();
@@ -478,7 +474,6 @@
             ).join('');
         }
 
-        // Car CRUD
         document.getElementById('add-car-btn').addEventListener('click', () => {
             document.getElementById('car-modal-title').textContent = 'Add New Car';
             document.getElementById('car-form').reset();
@@ -531,7 +526,6 @@
             }
         }
 
-        // Config CRUD
         document.getElementById('add-config-btn').addEventListener('click', () => {
             document.getElementById('config-modal-title').textContent = 'Add Configuration';
             document.getElementById('config-form').reset();
@@ -582,7 +576,6 @@
             }
         }
 
-        // Init
         document.getElementById('refresh-btn').addEventListener('click', loadDashboard);
         document.querySelector('.mobile-toggle').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('active');

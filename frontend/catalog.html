@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Navigation -->
+    
     <nav class="navbar">
         <div class="container">
             <a href="index.html" class="navbar-brand">
@@ -49,7 +49,7 @@
         </div>
     </nav>
 
-    <!-- Page Header -->
+    
     <section style="background: var(--secondary); color: white; padding: 3rem 0;">
         <div class="container">
             <h1><i class="fas fa-cube"></i> 3D Car Catalog</h1>
@@ -57,10 +57,10 @@
         </div>
     </section>
 
-    <!-- Main Content -->
+    
     <main class="cars-section">
         <div class="container">
-            <!-- Search & Filters -->
+            
             <div class="search-filters">
                 <div class="search-bar">
                     <div class="search-input">
@@ -79,12 +79,12 @@
                 </div>
             </div>
 
-            <!-- Results Info -->
+            
             <div class="flex justify-between items-center mb-2">
                 <p class="text-gray" id="results-count">Loading cars...</p>
             </div>
 
-            <!-- Cars Grid -->
+            
             <div class="cars-grid" id="cars-grid">
                 <div class="loading">
                     <div class="spinner"></div>
@@ -93,7 +93,7 @@
         </div>
     </main>
 
-    <!-- Footer -->
+    
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
@@ -107,7 +107,6 @@
         let allCars = [];
         let filteredCars = [];
 
-        // Load cars from API
         async function loadCars() {
             const container = document.getElementById('cars-grid');
             const resultsCount = document.getElementById('results-count');
@@ -116,7 +115,6 @@
                 allCars = await CarsAPI.getAll();
                 filteredCars = [...allCars];
                 
-                // Populate brand filter
                 const brands = [...new Set(allCars.map(car => car.brand))];
                 const brandFilter = document.getElementById('brand-filter');
                 brands.forEach(brand => {
@@ -138,7 +136,6 @@
             }
         }
 
-        // Render cars
         function renderCars() {
             const container = document.getElementById('cars-grid');
             const resultsCount = document.getElementById('results-count');
@@ -177,7 +174,6 @@
             `).join('');
         }
 
-        // Filter and sort cars
         function filterCars() {
             const search = document.getElementById('search-input').value.toLowerCase();
             const brand = document.getElementById('brand-filter').value;
@@ -191,7 +187,6 @@
                 return matchesSearch && matchesBrand;
             });
 
-            // Sort
             switch (sort) {
                 case 'price-low':
                     filteredCars.sort((a, b) => a.basePrice - b.basePrice);
@@ -210,12 +205,10 @@
             renderCars();
         }
 
-        // Event listeners
         document.getElementById('search-input').addEventListener('input', filterCars);
         document.getElementById('brand-filter').addEventListener('change', filterCars);
         document.getElementById('sort-filter').addEventListener('change', filterCars);
 
-        // Initialize
         loadCars();
     </script>
 </body>

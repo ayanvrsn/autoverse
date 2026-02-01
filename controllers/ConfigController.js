@@ -1,7 +1,6 @@
 const Config = require('../models/Config');
 const Car = require('../models/Car');
 
-// Get all configurations
 exports.getConfigs = async (req, res) => {
     try {
         const configs = await Config.find().populate('carId', 'brand model');
@@ -11,7 +10,6 @@ exports.getConfigs = async (req, res) => {
     }
 };
 
-// Get configuration by ID
 exports.getConfigById = async (req, res) => {
     try {
         const config = await Config.findById(req.params.id).populate('carId');
@@ -24,18 +22,15 @@ exports.getConfigById = async (req, res) => {
     }
 };
 
-// Create new configuration (Admin only)
 exports.createConfig = async (req, res) => {
     try {
         const { carId, name, priceTotal, sketchfabEmbedHtml, specs } = req.body;
         
-        // Verify car exists
         const car = await Car.findById(carId);
         if (!car) {
             return res.status(404).json({ message: 'Car not found' });
         }
         
-        // Check if car already has 3 configurations
         const existingConfigs = await Config.countDocuments({ carId });
         if (existingConfigs >= 3) {
             return res.status(400).json({ 
@@ -58,7 +53,6 @@ exports.createConfig = async (req, res) => {
     }
 };
 
-// Update configuration (Admin only)
 exports.updateConfig = async (req, res) => {
     try {
         const updated = await Config.findByIdAndUpdate(
@@ -77,7 +71,6 @@ exports.updateConfig = async (req, res) => {
     }
 };
 
-// Delete configuration (Admin only)
 exports.deleteConfig = async (req, res) => {
     try {
         const config = await Config.findByIdAndDelete(req.params.id);

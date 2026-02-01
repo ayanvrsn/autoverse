@@ -67,7 +67,6 @@
 
     <script src="js/api.js"></script>
     <script>
-        // Redirect if already logged in
         if (Auth.isLoggedIn()) {
             window.location.href = 'catalog.html';
         }
@@ -82,7 +81,6 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            // Reset error state
             errorDiv.classList.add('hidden');
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span>Signing in...</span> <i class="fas fa-spinner fa-spin"></i>';
@@ -90,7 +88,6 @@
             try {
                 await AuthAPI.login(email, password);
                 
-                // Redirect based on role
                 if (Auth.isAdmin()) {
                     window.location.href = 'admin.html';
                 } else {
