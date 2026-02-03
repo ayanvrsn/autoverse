@@ -15,6 +15,12 @@ router.post('/login', [
     check('password', 'Password is required').notEmpty()
 ], controller.login);
 
+router.get('/verify-email', controller.verifyEmail);
+
+router.post('/resend-verification', [
+    check('email', 'Invalid email format').isEmail()
+], controller.resendVerificationEmail);
+
 router.get('/me', authMiddleware, controller.getMe);
 
 router.get('/users', roleMiddleware(['ADMIN']), controller.getUsers);

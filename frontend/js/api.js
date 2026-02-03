@@ -221,6 +221,19 @@ const OrdersAPI = {
         });
     },
 
+    async requestCheckoutCode() {
+        return apiRequest('/orders/checkout/request-code', {
+            method: 'POST'
+        });
+    },
+
+    async confirmWithCode(code) {
+        return apiRequest('/orders/checkout/confirm', {
+            method: 'POST',
+            body: JSON.stringify({ code })
+        });
+    },
+
     async getAllAdmin() {
         return apiRequest('/orders/admin/all');
     },

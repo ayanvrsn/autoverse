@@ -1,5 +1,47 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
+const User = require('../models/User');
+const crypto = require('crypto');
+const sendEmail = require('../utils/sendEmail');
+
+const ORDER_CODE_TTL_MS = 60 * 1000; //how many ms
+
+const generateOrderCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const hashCode = (code) => crypto.createHash('sha256').update(code).digest('hex');
+
+const buildOrderFromCart = async (userId) => {
+    const cart = await Cart.findOne({ userId })
+        .populate('items.carId')
+        .populate('items.configurationId');
+
+    if (!cart || cart.items.length === 0) {
+        return { error: { status: 400, message: 'Cart is empty' } };
+    }
+
+    const totalAmount = cart.items.reduce((sum, item) => sum + item.price, 0);
+
+    const order = new Order({
+        userId,
+        items: cart.items.map(item => ({
+            carId: item.carId._id,
+            configurationId: item.configurationId._id,
+            price: item.price
+        })),
+        status: 'pending',
+        totalAmount
+    });
+
+    await order.save();
+
+    cart.items = [];
+    await cart.save();
+
+    const populatedOrder = await Order.findById(order._id)
+        .populate('items.carId', 'brand model year heroImage')
+        .populate('items.configurationId', 'name specs');
+
+    return { order: populatedOrder };
+};
 
 exports.getOrders = async (req, res) => {
     try {
@@ -50,42 +92,90 @@ exports.getOrderById = async (req, res) => {
 };
 
 exports.createOrder = async (req, res) => {
+    return res.status(400).json({
+        message: 'Order confirmation code is required. Use /api/orders/checkout/request-code and /api/orders/checkout/confirm.'
+    });
+};
+
+exports.requestOrderCode = async (req, res) => {
     try {
         const userId = req.user.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-        const cart = await Cart.findOne({ userId })
-            .populate('items.carId')
-            .populate('items.configurationId');
+        if (!user.isVerified) {
+            return res.status(403).json({ message: 'Please verify your email before placing an order' });
+        }
 
+        const cart = await Cart.findOne({ userId });
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({ message: 'Cart is empty' });
         }
 
-        const totalAmount = cart.items.reduce((sum, item) => sum + item.price, 0);
+        const code = generateOrderCode();
+        user.orderVerificationCodeHash = hashCode(code);
+        user.orderVerificationExpiresAt = new Date(Date.now() + ORDER_CODE_TTL_MS);
+        await user.save();
 
-        const order = new Order({
-            userId,
-            items: cart.items.map(item => ({
-                carId: item.carId._id,
-                configurationId: item.configurationId._id,
-                price: item.price
-            })),
-            status: 'pending',
-            totalAmount
-        });
+        await sendEmail(
+            user.email,
+            'Your order confirmation code',
+            `<h2>Order confirmation</h2>
+             <p>Your confirmation code is:</p>
+             <h1 style="letter-spacing:3px;">${code}</h1>
+             <p>This code expires in 1 minute.</p>`
+        );
 
-        await order.save();
-
-        cart.items = [];
-        await cart.save();
-
-        const populatedOrder = await Order.findById(order._id)
-            .populate('items.carId', 'brand model year heroImage')
-            .populate('items.configurationId', 'name specs');
-
-        res.status(201).json(populatedOrder);
+        return res.json({ message: 'Confirmation code sent to your email' });
     } catch (error) {
-        res.status(500).json({ message: 'Error creating order', error: error.message });
+        res.status(500).json({ message: 'Error sending confirmation code', error: error.message });
+    }
+};
+
+exports.confirmOrder = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { code } = req.body;
+
+        if (!code) {
+            return res.status(400).json({ message: 'Confirmation code is required' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (!user.orderVerificationCodeHash || !user.orderVerificationExpiresAt) {
+            return res.status(400).json({ message: 'Request a confirmation code first' });
+        }
+
+        if (new Date() > new Date(user.orderVerificationExpiresAt)) {
+            user.orderVerificationCodeHash = null;
+            user.orderVerificationExpiresAt = null;
+            await user.save();
+            return res.status(400).json({ message: 'Confirmation code expired. Request a new one.' });
+        }
+
+        const normalizedCode = String(code).trim();
+        if (hashCode(normalizedCode) !== user.orderVerificationCodeHash) {
+            return res.status(400).json({ message: 'Invalid confirmation code' });
+        }
+
+        const { order, error } = await buildOrderFromCart(userId);
+        if (error) {
+            return res.status(error.status).json({ message: error.message });
+        }
+
+        user.orderVerificationCodeHash = null;
+        user.orderVerificationExpiresAt = null;
+        await user.save();
+
+        return res.status(201).json(order);
+    } catch (error) {
+        res.status(500).json({ message: 'Error confirming order', error: error.message });
     }
 };
 

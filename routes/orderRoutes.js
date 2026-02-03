@@ -7,14 +7,20 @@ const {
     getAllOrders, 
     getOrderById, 
     createOrder, 
-    updateOrderStatus 
+    updateOrderStatus,
+    requestOrderCode,
+    confirmOrder
 } = require('../controllers/OrderController');
 
-router.get('/', authMiddleware, getOrders);
-router.get('/:id', authMiddleware, getOrderById);
-router.post('/', authMiddleware, createOrder);
-
 router.get('/admin/all', roleMiddleware(['ADMIN']), getAllOrders);
+
+router.post('/checkout/request-code', authMiddleware, requestOrderCode);
+router.post('/checkout/confirm', authMiddleware, confirmOrder);
+
+router.get('/', authMiddleware, getOrders);
+router.post('/', authMiddleware, createOrder);
+router.get('/:id', authMiddleware, getOrderById);
+
 router.put('/:id/status', roleMiddleware(['ADMIN']), updateOrderStatus);
 
 module.exports = router;

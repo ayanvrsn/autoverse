@@ -124,12 +124,12 @@
             try {
                 await AuthAPI.register(email, password);
                 
-                successDiv.querySelector('span').textContent = 'Account created successfully! Redirecting...';
+                successDiv.querySelector('span').textContent = 'Account created. Check your email to verify, then sign in.';
                 successDiv.classList.remove('hidden');
                 
                 setTimeout(() => {
-                    window.location.href = 'catalog.html';
-                }, 1500);
+                    window.location.href = 'login.html';
+                }, 2200);
             } catch (error) {
                 errorDiv.querySelector('span').textContent = error.message;
                 errorDiv.classList.remove('hidden');
