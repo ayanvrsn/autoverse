@@ -33,10 +33,15 @@ Create a `.env` file in the project root:
 MONGO_URI=your_mongodb_connection_string
 PORT=3003
 JWT_SECRET=your_long_random_secret
+APP_URL=http://localhost:3003
+EMAIL_USER=your_gmail_address
+EMAIL_PASS=your_gmail_app_password
 ```
 
 Notes:
 - `JWT_SECRET` is required (the server will throw on startup if missing).
+- `EMAIL_USER`/`EMAIL_PASS` are required for email verification and order confirmation codes.
+- `APP_URL` is used to generate email verification links.
 - On hosting platforms like Render, `PORT` is provided automatically; locally you can set it (example: `3003`).
 
 ## Run Locally
@@ -98,7 +103,7 @@ Base URL: `/api`
 ### Auth (`/api/auth`)
 
 #### POST `/api/auth/register`
-Create a new user.
+Create a new user and send an email verification link.
 
 Request body:
 ```json
@@ -108,9 +113,8 @@ Request body:
 Response `201`:
 ```json
 {
-  "message": "User registered successfully",
-  "token": "<jwt>",
-  "user": { "id": "<id>", "email": "user@example.com", "role": "USER" }
+  "message": "Registration successful. Please check your email to verify your account.",
+  "user": { "id": "<id>", "email": "user@example.com", "role": "USER", "isVerified": false }
 }
 ```
 
@@ -133,6 +137,9 @@ Response `200`:
 }
 ```
 
+Common errors:
+- `403` if email is not verified yet
+
 #### GET `/api/auth/me`
 Get the currently logged-in user.
 
@@ -153,6 +160,20 @@ Headers:
 ```http
 Authorization: Bearer <admin-jwt>
 ```
+
+#### GET `/api/auth/verify-email?token=...`
+Verify email by token from the email link.
+
+#### POST `/api/auth/resend-verification`
+Resend verification email.
+
+Request body:
+```json
+{ "email": "user@example.com" }
+```
+
+#### DELETE `/api/auth/users/:id` (Admin only)
+Permanently delete a user account.
 
 ### Cars (`/api/cars`)
 
@@ -301,10 +322,30 @@ Rules:
 - Allowed if the order belongs to the current user, or the user is ADMIN.
 
 #### POST `/api/orders` (Authenticated)
-Create a new order from the current user's cart (checkout).
+Deprecated for checkout flow. Returns a message explaining to use confirmation-code endpoints.
+
+#### POST `/api/orders/checkout/request-code` (Authenticated)
+Send a one-time 6-digit confirmation code to the user's email.
+
+#### POST `/api/orders/checkout/confirm` (Authenticated)
+Confirm order with email code and create order from cart.
+
+Request body:
+```json
+{ "code": "123456" }
+```
 
 #### GET `/api/orders/admin/all` (Admin only)
 List all orders (ADMIN).
+
+#### GET `/api/orders/admin/sales` (Admin only)
+Daily sales analytics.
+
+Optional query params:
+- `from=YYYY-MM-DD`
+- `to=YYYY-MM-DD`
+
+If not provided, defaults to last 7 days.
 
 #### PUT `/api/orders/:id/status` (Admin only)
 Update order status.
@@ -323,6 +364,8 @@ Valid statuses:
 - Set Render environment variables:
   - `MONGO_URI`
   - `JWT_SECRET`
+  - `APP_URL`
+  - `EMAIL_USER`
+  - `EMAIL_PASS`
 - `PORT` is provided by Render automatically.
 - The frontend is served from the same service under `/frontend`.
-
