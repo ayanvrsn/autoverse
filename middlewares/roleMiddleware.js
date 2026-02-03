@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 const { secret } = require('../controllers/KeyJWT');
 
 module.exports = function(allowedRoles) {
-    return function(req, res, next) {
+    return async function(req, res, next) {
         if (req.method === "OPTIONS") {
             return next();
         }
@@ -19,9 +20,13 @@ module.exports = function(allowedRoles) {
             }
             
             const decoded = jwt.verify(token, secret);
-            req.user = decoded;
+            const user = await User.findById(decoded.id).select('_id role');
+            if (!user) {
+                return res.status(401).json({ message: "User not authorized" });
+            }
+            req.user = { ...decoded, role: user.role };
             
-            if (!allowedRoles.includes(decoded.role)) {
+            if (!allowedRoles.includes(user.role)) {
                 return res.status(403).json({ message: "Access denied. Insufficient permissions." });
             }
             

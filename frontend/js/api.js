@@ -114,6 +114,12 @@ const AuthAPI = {
 
     async getUsers() {
         return apiRequest('/auth/users');
+    },
+
+    async deleteUser(id) {
+        return apiRequest(`/auth/users/${id}`, {
+            method: 'DELETE'
+        });
     }
 };
 
@@ -236,6 +242,14 @@ const OrdersAPI = {
 
     async getAllAdmin() {
         return apiRequest('/orders/admin/all');
+    },
+
+    async getSalesByDay(from, to) {
+        const params = new URLSearchParams();
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        const query = params.toString();
+        return apiRequest(`/orders/admin/sales${query ? `?${query}` : ''}`);
     },
 
     async updateStatus(id, status) {

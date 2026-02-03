@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
+const User = require('../models/User');
 const {secret} = require('../controllers/KeyJWT')
-module.exports = function (req,res,next) {
+module.exports = async function (req,res,next) {
     if (req.method === "OPTIONS") {
         return next()
     }
@@ -14,6 +15,10 @@ module.exports = function (req,res,next) {
             return res.status(401).json({message:"User not authorized"})
         }
         const decoded = jwt.verify(token, secret)
+        const user = await User.findById(decoded.id).select('_id');
+        if (!user) {
+            return res.status(401).json({ message: "User not authorized" });
+        }
         req.user = decoded
         next()
     } catch (error) {

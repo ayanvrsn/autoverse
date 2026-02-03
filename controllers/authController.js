@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Cart = require('../models/Cart');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -189,6 +190,29 @@ class authController {
         } catch (error) {
             console.error('Resend verification error:', error);
             return res.status(500).json({ message: 'Could not send verification email' });
+        }
+    }
+
+    async deleteUserPermanently(req, res) {
+        try {
+            const { id } = req.params;
+
+            if (id === req.user.id) {
+                return res.status(400).json({ message: 'You cannot delete your own account' });
+            }
+
+            const targetUser = await User.findById(id);
+            if (!targetUser) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            await Cart.deleteOne({ userId: id });
+            await User.findByIdAndDelete(id);
+
+            return res.json({ message: 'User deleted permanently' });
+        } catch (error) {
+            console.error('Delete user error:', error);
+            return res.status(500).json({ message: 'Error deleting user' });
         }
     }
 }

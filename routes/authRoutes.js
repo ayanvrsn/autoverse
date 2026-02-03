@@ -24,5 +24,6 @@ router.post('/resend-verification', [
 router.get('/me', authMiddleware, controller.getMe);
 
 router.get('/users', roleMiddleware(['ADMIN']), controller.getUsers);
+router.delete('/users/:id', roleMiddleware(['ADMIN']), controller.deleteUserPermanently);
 
 module.exports = router;

@@ -5,6 +5,7 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 const { 
     getOrders, 
     getAllOrders, 
+    getSalesByDay,
     getOrderById, 
     createOrder, 
     updateOrderStatus,
@@ -13,6 +14,7 @@ const {
 } = require('../controllers/OrderController');
 
 router.get('/admin/all', roleMiddleware(['ADMIN']), getAllOrders);
+router.get('/admin/sales', roleMiddleware(['ADMIN']), getSalesByDay);
 
 router.post('/checkout/request-code', authMiddleware, requestOrderCode);
 router.post('/checkout/confirm', authMiddleware, confirmOrder);

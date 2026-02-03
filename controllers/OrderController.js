@@ -70,6 +70,96 @@ exports.getAllOrders = async (req, res) => {
     }
 };
 
+exports.getSalesByDay = async (req, res) => {
+    try {
+        const { from, to } = req.query;
+
+        let startDate;
+        let endDate;
+
+        if (from && to) {
+            startDate = new Date(`${from}T00:00:00.000Z`);
+            endDate = new Date(`${to}T23:59:59.999Z`);
+        } else {
+            const now = new Date();
+            endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+            startDate = new Date(endDate);
+            startDate.setUTCDate(startDate.getUTCDate() - 6);
+            startDate.setUTCHours(0, 0, 0, 0);
+        }
+
+        if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+            return res.status(400).json({ message: 'Invalid date range. Use YYYY-MM-DD for from and to.' });
+        }
+
+        if (startDate > endDate) {
+            return res.status(400).json({ message: '`from` must be before or equal to `to`' });
+        }
+
+        const totalDays = Math.floor((endDate - startDate) / (24 * 60 * 60 * 1000)) + 1;
+        if (totalDays > 365) {
+            return res.status(400).json({ message: 'Date range is too large. Maximum is 365 days.' });
+        }
+
+        const rows = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: { $gte: startDate, $lte: endDate }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: {
+                            format: '%Y-%m-%d',
+                            date: '$createdAt'
+                        }
+                    },
+                    ordersCount: { $sum: 1 },
+                    totalSales: { $sum: '$totalAmount' }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]);
+
+        const byDate = new Map(rows.map((row) => [row._id, row]));
+        const points = [];
+        let cursor = new Date(startDate);
+
+        while (cursor <= endDate) {
+            const dateKey = cursor.toISOString().slice(0, 10);
+            const row = byDate.get(dateKey);
+            points.push({
+                date: dateKey,
+                ordersCount: row ? row.ordersCount : 0,
+                totalSales: row ? row.totalSales : 0
+            });
+            cursor.setUTCDate(cursor.getUTCDate() + 1);
+        }
+
+        const totals = points.reduce(
+            (acc, point) => {
+                acc.ordersCount += point.ordersCount;
+                acc.totalSales += point.totalSales;
+                return acc;
+            },
+            { ordersCount: 0, totalSales: 0 }
+        );
+
+        return res.json({
+            period: {
+                from: startDate.toISOString().slice(0, 10),
+                to: endDate.toISOString().slice(0, 10),
+                days: points.length
+            },
+            totals,
+            points
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error fetching sales analytics', error: error.message });
+    }
+};
+
 exports.getOrderById = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id)
