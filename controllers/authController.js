@@ -12,6 +12,48 @@ const generateJwtToken = (id, role) => {
     return jwt.sign(payload, secret, { expiresIn: '24h' });
 };
 
+const getAppBaseUrl = () => process.env.APP_URL || `http://localhost:${process.env.PORT || 3003}`;
+const getFrontendBaseUrl = () => process.env.FRONTEND_URL || `${getAppBaseUrl()}/frontend`;
+
+const normalizeGoogleProfile = (profile) => ({
+    email: profile?.emails?.[0]?.value?.toLowerCase(),
+    googleId: profile?.id,
+    name: profile?.displayName || null
+});
+
+const buildOAuthRedirect = ({
+    token,
+    isNewUser = false,
+    needsPassword = false,
+    error = null
+} = {}) => {
+    const loginUrl = new URL('login.html', `${getFrontendBaseUrl().replace(/\/$/, '')}/`);
+
+    if (error) {
+        loginUrl.searchParams.set('error', error);
+        return loginUrl.toString();
+    }
+
+    const hashParams = new URLSearchParams({
+        token,
+        oauth: 'google',
+        isNewUser: isNewUser ? '1' : '0',
+        needsPassword: needsPassword ? '1' : '0'
+    });
+
+    return `${loginUrl.toString()}#${hashParams.toString()}`;
+};
+
+const buildUserResponse = (user) => ({
+    id: user._id,
+    email: user.email,
+    name: user.name || null,
+    role: user.role,
+    isVerified: user.isVerified,
+    hasPassword: Boolean(user.password),
+    googleLinked: Boolean(user.googleId)
+});
+
 class authController {
     async registration(req, res) {
         try {
@@ -27,6 +69,11 @@ class authController {
             
             const existingUser = await User.findOne({ email: email.toLowerCase() });
             if (existingUser) {
+                if (existingUser.googleId && !existingUser.password) {
+                    return res.status(400).json({
+                        message: 'This email is already linked to Google sign-in. Please use Google login first.'
+                    });
+                }
                 return res.status(400).json({ 
                     message: 'User with this email already exists' 
                 });
@@ -45,7 +92,7 @@ class authController {
             
             await user.save();
 
-            const baseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3003}`;
+            const baseUrl = getAppBaseUrl();
             const verificationLink = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
 
             await sendEmail(
@@ -59,12 +106,7 @@ class authController {
             
             return res.status(201).json({ 
                 message: 'Registration successful. Please check your email to verify your account.',
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    role: user.role,
-                    isVerified: user.isVerified
-                }
+                user: buildUserResponse(user)
             });
         } catch (error) {
             console.error('Registration error:', error);
@@ -80,6 +122,12 @@ class authController {
             if (!user) {
                 return res.status(400).json({ 
                     message: 'Invalid email or password' 
+                });
+            }
+
+            if (!user.password) {
+                return res.status(400).json({
+                    message: 'This account uses Google sign-in. Please continue with Google.'
                 });
             }
 
@@ -100,11 +148,7 @@ class authController {
             
             return res.json({ 
                 token,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    role: user.role
-                }
+                user: buildUserResponse(user)
             });
         } catch (error) {
             console.error('Login error:', error);
@@ -124,11 +168,11 @@ class authController {
 
     async getMe(req, res) {
         try {
-            const user = await User.findById(req.user.id, { password: 0 });
+            const user = await User.findById(req.user.id);
             if (!user) {
                 return res.status(404).json({ message: 'User not found' });
             }
-            return res.json(user);
+            return res.json(buildUserResponse(user));
         } catch (error) {
             console.error('Get me error:', error);
             return res.status(500).json({ message: 'Error fetching user' });
@@ -175,7 +219,7 @@ class authController {
             user.verificationToken = crypto.randomBytes(32).toString('hex');
             await user.save();
 
-            const baseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3003}`;
+            const baseUrl = getAppBaseUrl();
             const verificationLink = `${baseUrl}/api/auth/verify-email?token=${user.verificationToken}`;
 
             await sendEmail(
@@ -190,6 +234,97 @@ class authController {
         } catch (error) {
             console.error('Resend verification error:', error);
             return res.status(500).json({ message: 'Could not send verification email' });
+        }
+    }
+
+    async googleCallback(req, res) {
+        try {
+            const profile = req.user;
+            const { email, googleId, name } = normalizeGoogleProfile(profile);
+
+            if (!email || !googleId) {
+                return res.redirect(buildOAuthRedirect({ error: 'google_profile_incomplete' }));
+            }
+
+            let user = await User.findOne({
+                $or: [
+                    { googleId },
+                    { email }
+                ]
+            });
+
+            let isNewUser = false;
+
+            if (!user) {
+                isNewUser = true;
+                user = new User({
+                    email,
+                    name,
+                    googleId,
+                    role: 'USER',
+                    isVerified: true,
+                    verificationToken: null
+                });
+            } else {
+                if (user.googleId && user.googleId !== googleId) {
+                    return res.redirect(buildOAuthRedirect({ error: 'google_account_conflict' }));
+                }
+
+                user.googleId = googleId;
+                if (!user.name && name) {
+                    user.name = name;
+                }
+                user.isVerified = true;
+                user.verificationToken = null;
+            }
+
+            await user.save();
+
+            const token = generateJwtToken(user._id, user.role);
+            const needsPassword = !user.password;
+
+            return res.redirect(buildOAuthRedirect({
+                token,
+                isNewUser,
+                needsPassword
+            }));
+        } catch (error) {
+            console.error('Google login error:', error);
+            return res.redirect(buildOAuthRedirect({ error: 'google_login_failed' }));
+        }
+    }
+
+    async setPassword(req, res) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    message: 'Validation error',
+                    errors: errors.array()
+                });
+            }
+
+            const { password } = req.body;
+
+            const user = await User.findById(req.user.id);
+            if (!user) {
+                return res.status(404).json({ message: 'User not found' });
+            }
+
+            if (user.password) {
+                return res.status(400).json({ message: 'Password is already set for this account' });
+            }
+
+            user.password = await bcrypt.hash(password, 10);
+            await user.save();
+
+            return res.json({
+                message: 'Password has been set successfully',
+                user: buildUserResponse(user)
+            });
+        } catch (error) {
+            console.error('Set password error:', error);
+            return res.status(500).json({ message: 'Could not set password' });
         }
     }
 

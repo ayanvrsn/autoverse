@@ -8,9 +8,19 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    name: {
+      type: String,
+      trim: true,
+    },
     password: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     role: {
       type: String,

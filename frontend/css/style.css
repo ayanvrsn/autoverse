@@ -536,6 +536,41 @@ h4 { font-size: 1.25rem; }
     text-decoration: underline;
 }
 
+.auth-divider {
+    text-align: center;
+    color: var(--gray-400);
+    margin: 1.25rem 0;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 24px);
+    height: 1px;
+    background: var(--gray-200);
+}
+
+.auth-divider::before {
+    left: 0;
+}
+
+.auth-divider::after {
+    right: 0;
+}
+
+.btn-google {
+    border-color: var(--gray-300);
+    color: var(--gray-700);
+}
+
+.btn-google:hover {
+    border-color: var(--primary);
+}
+
 
 .auth-page {
     min-height: 100vh;
@@ -969,6 +1004,31 @@ td {
     font-size: 0.75rem;
     font-weight: 600;
     background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 220px;
+}
+
+.order-item-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.order-item-title {
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.order-item-price {
+    margin-left: auto;
+    font-weight: 600;
     color: var(--gray-700);
 }
 

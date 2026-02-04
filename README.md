@@ -36,12 +36,17 @@ JWT_SECRET=your_long_random_secret
 APP_URL=http://localhost:3003
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:3003/api/auth/google/callback
+FRONTEND_URL=http://localhost:3003/frontend
 ```
 
 Notes:
 - `JWT_SECRET` is required (the server will throw on startup if missing).
 - `EMAIL_USER`/`EMAIL_PASS` are required for email verification and order confirmation codes.
 - `APP_URL` is used to generate email verification links.
+- Google OAuth is enabled only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
 - On hosting platforms like Render, `PORT` is provided automatically; locally you can set it (example: `3003`).
 
 ## Run Locally
@@ -139,6 +144,7 @@ Response `200`:
 
 Common errors:
 - `403` if email is not verified yet
+- `400` if account was created through Google and has no password yet
 
 #### GET `/api/auth/me`
 Get the currently logged-in user.
@@ -150,7 +156,34 @@ Authorization: Bearer <jwt>
 
 Response `200`:
 ```json
-{ "_id": "<id>", "email": "user@example.com", "role": "USER", "createdAt": "...", "updatedAt": "..." }
+{
+  "id": "<id>",
+  "email": "user@example.com",
+  "name": "John Doe",
+  "role": "USER",
+  "isVerified": true,
+  "hasPassword": false,
+  "googleLinked": true
+}
+```
+
+#### GET `/api/auth/google`
+Start Google OAuth 2.0 flow (redirects to Google consent page).
+
+#### GET `/api/auth/google/callback`
+Google callback endpoint (redirects to `/frontend/login.html` with token in URL hash).
+
+#### POST `/api/auth/set-password` (Authenticated)
+Set a password for the current account (useful for Google-only users).
+
+Headers:
+```http
+Authorization: Bearer <jwt>
+```
+
+Request body:
+```json
+{ "password": "secret123" }
 ```
 
 #### GET `/api/auth/users` (Admin only)

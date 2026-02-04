@@ -58,6 +58,13 @@
                     </button>
                 </form>
 
+                <div class="auth-divider">or</div>
+
+                <button type="button" class="btn btn-outline btn-block btn-lg btn-google" id="google-login-btn">
+                    <i class="fab fa-google"></i>
+                    <span>Continue with Google</span>
+                </button>
+
                 <div class="form-footer">
                     Don't have an account? <a href="signup.html">Sign up</a>
                 </div>
@@ -67,13 +74,84 @@
 
     <script src="js/api.js"></script>
     <script>
-        if (Auth.isLoggedIn()) {
-            window.location.href = 'catalog.html';
-        }
-
         const form = document.getElementById('login-form');
         const errorDiv = document.getElementById('error-message');
         const loginBtn = document.getElementById('login-btn');
+        const googleBtn = document.getElementById('google-login-btn');
+
+        function redirectByRole() {
+            if (Auth.isAdmin()) {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = 'catalog.html';
+            }
+        }
+
+        function showError(message) {
+            errorDiv.querySelector('span').textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function parseOAuthParams() {
+            const queryParams = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+            return { queryParams, hashParams };
+        }
+
+        async function handleOAuthRedirectIfPresent() {
+            const { queryParams, hashParams } = parseOAuthParams();
+            const token = hashParams.get('token');
+            const oauthError = queryParams.get('error');
+
+            if (oauthError) {
+                const errorMap = {
+                    google_not_configured: 'Google login is not configured on this server yet.',
+                    google_auth_failed: 'Google authentication failed. Please try again.',
+                    google_profile_incomplete: 'Google account has no email access. Use another Google account.',
+                    google_account_conflict: 'This email is already linked to another Google account.',
+                    google_login_failed: 'Could not complete Google login. Please try again.'
+                };
+                showError(errorMap[oauthError] || 'Google login error. Please try again.');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            if (!token) return false;
+
+            try {
+                Auth.setToken(token);
+                const me = await AuthAPI.getMe();
+                Auth.setUser(me);
+            } catch (error) {
+                Auth.removeToken();
+                showError('Failed to finish Google login. Please try again.');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return true;
+            }
+
+            const isNewUser = hashParams.get('isNewUser') === '1';
+            const needsPassword = hashParams.get('needsPassword') === '1';
+
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (isNewUser && needsPassword) {
+                window.location.href = 'set-password.html';
+                return true;
+            }
+
+            redirectByRole();
+            return true;
+        }
+
+        (async () => {
+            const wasOAuthHandled = await handleOAuthRedirectIfPresent();
+            if (!wasOAuthHandled && Auth.isLoggedIn()) {
+                redirectByRole();
+            }
+        })();
+
+        googleBtn.addEventListener('click', () => {
+            window.location.href = AuthAPI.getGoogleLoginUrl();
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -87,15 +165,9 @@
 
             try {
                 await AuthAPI.login(email, password);
-                
-                if (Auth.isAdmin()) {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'catalog.html';
-                }
+                redirectByRole();
             } catch (error) {
-                errorDiv.querySelector('span').textContent = error.message;
-                errorDiv.classList.remove('hidden');
+                showError(error.message);
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '<span>Sign In</span> <i class="fas fa-arrow-right"></i>';
             }

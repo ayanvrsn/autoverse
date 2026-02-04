@@ -161,7 +161,7 @@
                                 ${orders.map(order => `
                                     <tr>
                                         <td><code>${order._id.slice(-8)}</code></td>
-                                        <td>${order.items.length} item(s)</td>
+                                        <td>${UI.renderOrderItems(order.items)}</td>
                                         <td><strong>${UI.formatPrice(order.totalAmount)}</strong></td>
                                         <td>
                                             <span class="badge badge-${getStatusColor(order.status)}">

@@ -84,6 +84,10 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 const AuthAPI = {
+    getGoogleLoginUrl() {
+        return `${API_BASE_URL}/auth/google?source=frontend`;
+    },
+
     async login(email, password) {
         const data = await apiRequest('/auth/login', {
             method: 'POST',
@@ -110,6 +114,13 @@ const AuthAPI = {
 
     async getMe() {
         return apiRequest('/auth/me');
+    },
+
+    async setPassword(password) {
+        return apiRequest('/auth/set-password', {
+            method: 'POST',
+            body: JSON.stringify({ password })
+        });
     },
 
     async getUsers() {
@@ -298,6 +309,48 @@ const UI = {
             currency: 'USD',
             minimumFractionDigits: 0
         }).format(price);
+    },
+
+    escapeHtml(value) {
+        const str = String(value ?? '');
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return str.replace(/[&<>"']/g, (ch) => map[ch]);
+    },
+
+    renderOrderItems(items, { showPrice = true } = {}) {
+        if (!Array.isArray(items) || items.length === 0) {
+            return '<span class="text-gray">No items</span>';
+        }
+
+        return `
+            <div class="order-items">
+                ${items.map((item) => {
+                    const car = item?.carId;
+                    const config = item?.configurationId;
+                    const carLabel = (!car || typeof car === 'string')
+                        ? 'Unknown car'
+                        : ([car.brand, car.model, car.year].filter(Boolean).join(' ') || 'Unknown car');
+                    const configLabel = (!config || typeof config === 'string' || !config?.name)
+                        ? null
+                        : String(config.name);
+                    const priceLabel = typeof item?.price === 'number' ? this.formatPrice(item.price) : null;
+
+                    return `
+                        <div class="order-item-row">
+                            <span class="order-item-title">${this.escapeHtml(carLabel)}</span>
+                            ${configLabel ? `<span class="badge">${this.escapeHtml(configLabel)}</span>` : ''}
+                            ${showPrice && priceLabel ? `<span class="order-item-price">${this.escapeHtml(priceLabel)}</span>` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     },
 
     async updateCartBadge() {
