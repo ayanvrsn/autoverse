@@ -100,6 +100,14 @@
 
             try {
                 const cart = await CartAPI.get();
+                let currentUser = Auth.getUser();
+                try {
+                    const me = await AuthAPI.getMe();
+                    Auth.setUser(me);
+                    currentUser = me;
+                } catch (e) {
+                    // ignore profile fetch errors
+                }
                 const items = cart.items || [];
                 
                 cartCount.textContent = `${items.length} item${items.length !== 1 ? 's' : ''} in your cart`;
@@ -170,6 +178,15 @@
                             <span>Total</span>
                             <span>${UI.formatPrice(total)}</span>
                         </div>
+                        ${currentUser && currentUser.isVerified === false ? `
+                            <div class="alert alert-danger" style="margin-top:1rem;">
+                                <i class="fas fa-envelope"></i>
+                                Please verify your email before placing an order.
+                                <button class="btn btn-outline btn-sm" id="resend-verification-btn" style="margin-left:auto;">
+                                    Resend verification
+                                </button>
+                            </div>
+                        ` : ''}
                         <button class="btn btn-primary btn-block btn-lg" id="checkout-btn">
                             <i class="fas fa-credit-card"></i>
                             Place Order
@@ -195,6 +212,10 @@
                 });
 
                 document.getElementById('checkout-btn').addEventListener('click', async () => {
+                    if (currentUser && currentUser.isVerified === false) {
+                        UI.showToast('Please verify your email before placing an order.', 'error');
+                        return;
+                    }
                     try {
                         await OrdersAPI.requestCheckoutCode();
                         const code = prompt('Enter the 6-digit confirmation code sent to your email:');
@@ -202,7 +223,7 @@
                             UI.showToast('Order confirmation cancelled', 'info');
                             return;
                         }
-                        await OrdersAPI.confirmWithCode(code);
+                        await OrdersAPI.confirmWithCode(code.trim());
                         UI.showToast('Order placed successfully!', 'success');
                         setTimeout(() => {
                             window.location.href = 'profile.html';
@@ -211,6 +232,23 @@
                         UI.showToast(error.message, 'error');
                     }
                 });
+
+                const resendBtn = document.getElementById('resend-verification-btn');
+                if (resendBtn) {
+                    resendBtn.addEventListener('click', async () => {
+                        try {
+                            const email = currentUser?.email;
+                            if (!email) {
+                                UI.showToast('No email found for this account.', 'error');
+                                return;
+                            }
+                            await AuthAPI.resendVerification(email);
+                            UI.showToast('Verification email sent.', 'success');
+                        } catch (error) {
+                            UI.showToast(error.message, 'error');
+                        }
+                    });
+                }
 
             } catch (error) {
                 container.innerHTML = `

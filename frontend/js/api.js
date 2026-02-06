@@ -127,6 +127,13 @@ const AuthAPI = {
         return apiRequest('/auth/users');
     },
 
+    async resendVerification(email) {
+        return apiRequest('/auth/resend-verification', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+    },
+
     async deleteUser(id) {
         return apiRequest(`/auth/users/${id}`, {
             method: 'DELETE'
