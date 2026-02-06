@@ -26,12 +26,29 @@ const orderSchema = new mongoose.Schema({
     items: [orderItemSchema],
     status: {
         type: String, 
-        enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
-        default: 'pending'
+        enum: ['pending', 'paid', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+        default: 'paid'
     },
     totalAmount: {
         type: Number, 
         required: true
+    },
+    prepaymentPercent: {
+        type: Number,
+        default: 5
+    },
+    prepaymentAmount: {
+        type: Number,
+        required: true
+    },
+    stripeSessionId: {
+        type: String
+    },
+    stripePaymentIntentId: {
+        type: String
+    },
+    paidAt: {
+        type: Date
     }
 }, { timestamps: true });
 

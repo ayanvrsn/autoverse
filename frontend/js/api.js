@@ -245,16 +245,16 @@ const OrdersAPI = {
         });
     },
 
-    async requestCheckoutCode() {
-        return apiRequest('/orders/checkout/request-code', {
+    async createStripeCheckoutSession() {
+        return apiRequest('/orders/checkout/session', {
             method: 'POST'
         });
     },
 
-    async confirmWithCode(code) {
+    async confirmStripeSession(sessionId) {
         return apiRequest('/orders/checkout/confirm', {
             method: 'POST',
-            body: JSON.stringify({ code })
+            body: JSON.stringify({ sessionId })
         });
     },
 

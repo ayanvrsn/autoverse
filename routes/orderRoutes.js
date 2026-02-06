@@ -5,19 +5,17 @@ const roleMiddleware = require('../middlewares/roleMiddleware');
 const { 
     getOrders, 
     getAllOrders, 
-    getSalesByDay,
     getOrderById, 
     createOrder, 
     updateOrderStatus,
-    requestOrderCode,
-    confirmOrder
+    createStripeCheckoutSession,
+    confirmStripeCheckout
 } = require('../controllers/OrderController');
 
 router.get('/admin/all', roleMiddleware(['ADMIN']), getAllOrders);
-router.get('/admin/sales', roleMiddleware(['ADMIN']), getSalesByDay);
 
-router.post('/checkout/request-code', authMiddleware, requestOrderCode);
-router.post('/checkout/confirm', authMiddleware, confirmOrder);
+router.post('/checkout/session', authMiddleware, createStripeCheckoutSession);
+router.post('/checkout/confirm', authMiddleware, confirmStripeCheckout);
 
 router.get('/', authMiddleware, getOrders);
 router.post('/', authMiddleware, createOrder);

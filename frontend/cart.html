@@ -76,6 +76,14 @@
 
     <script src="js/api.js"></script>
     <script>
+        const cartParams = new URLSearchParams(window.location.search);
+        if (cartParams.get('stripe_cancelled') === '1') {
+            UI.showToast('Stripe checkout was cancelled.', 'info');
+            cartParams.delete('stripe_cancelled');
+            const cleanUrl = `${window.location.pathname}${cartParams.toString() ? `?${cartParams.toString()}` : ''}`;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+
         async function loadCart() {
             const container = document.getElementById('cart-content');
             const cartCount = document.getElementById('cart-count');
@@ -131,8 +139,8 @@
                 }
 
                 const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
-                const tax = subtotal * 0.08;
-                const total = subtotal + tax;
+                const prepaymentPercent = 5;
+                const prepayment = subtotal * (prepaymentPercent / 100);
 
                 container.innerHTML = `
                     <div class="cart-items">
@@ -167,16 +175,16 @@
                             <span>${UI.formatPrice(subtotal)}</span>
                         </div>
                         <div class="summary-row">
-                            <span>Tax (8%)</span>
-                            <span>${UI.formatPrice(tax)}</span>
+                            <span>Prepayment (${prepaymentPercent}%)</span>
+                            <span>${UI.formatPrice(prepayment)}</span>
                         </div>
                         <div class="summary-row">
                             <span>Shipping</span>
                             <span style="color: var(--success);">FREE</span>
                         </div>
                         <div class="summary-row total">
-                            <span>Total</span>
-                            <span>${UI.formatPrice(total)}</span>
+                            <span>Due now</span>
+                            <span>${UI.formatPrice(prepayment)}</span>
                         </div>
                         ${currentUser && currentUser.isVerified === false ? `
                             <div class="alert alert-danger" style="margin-top:1rem;">
@@ -217,17 +225,11 @@
                         return;
                     }
                     try {
-                        await OrdersAPI.requestCheckoutCode();
-                        const code = prompt('Enter the 6-digit confirmation code sent to your email:');
-                        if (!code) {
-                            UI.showToast('Order confirmation cancelled', 'info');
-                            return;
+                        const session = await OrdersAPI.createStripeCheckoutSession();
+                        if (!session?.url) {
+                            throw new Error('Stripe session did not return a checkout URL');
                         }
-                        await OrdersAPI.confirmWithCode(code.trim());
-                        UI.showToast('Order placed successfully!', 'success');
-                        setTimeout(() => {
-                            window.location.href = 'profile.html';
-                        }, 1500);
+                        window.location.href = session.url;
                     } catch (error) {
                         UI.showToast(error.message, 'error');
                     }

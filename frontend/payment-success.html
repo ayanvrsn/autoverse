@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - AutoVerse</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="form-container">
+            <a href="index.html" class="auth-logo">
+                <i class="fas fa-car-side"></i>
+                AutoVerse
+            </a>
+
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>Payment Successful</h2>
+                    <p>We are confirming your prepayment and creating the order.</p>
+                </div>
+
+                <div id="status-message" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Processing...</span>
+                </div>
+
+                <div class="form-footer">
+                    <a href="profile.html">Go to profile</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        const statusMessage = document.getElementById('status-message');
+
+        function updateStatus(message, isError = false) {
+            statusMessage.classList.toggle('alert-danger', isError);
+            statusMessage.classList.toggle('alert-success', !isError);
+            statusMessage.querySelector('span').textContent = message;
+        }
+
+        async function confirmPayment() {
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session_id');
+
+            if (!sessionId) {
+                updateStatus('Missing Stripe session ID.', true);
+                return;
+            }
+
+            try {
+                await OrdersAPI.confirmStripeSession(sessionId);
+                updateStatus('Order created successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = 'profile.html';
+                }, 1500);
+            } catch (error) {
+                updateStatus(error.message || 'Could not confirm payment.', true);
+            }
+        }
+
+        confirmPayment();
+    </script>
+</body>
+</html>

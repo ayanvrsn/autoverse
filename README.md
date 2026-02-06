@@ -40,6 +40,7 @@ GOOGLE_CLIENT_ID=your_google_oauth_client_id
 GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
 GOOGLE_CALLBACK_URL=http://localhost:3003/api/auth/google/callback
 FRONTEND_URL=http://localhost:3003/frontend
+STRIPE_SECRET_KEY=your_stripe_secret_key
 ```
 
 Notes:
@@ -47,6 +48,7 @@ Notes:
 - `EMAIL_USER`/`EMAIL_PASS` are required for email verification and order confirmation codes.
 - `APP_URL` is used to generate email verification links.
 - Google OAuth is enabled only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+- Stripe Checkout is enabled only when `STRIPE_SECRET_KEY` is set.
 - On hosting platforms like Render, `PORT` is provided automatically; locally you can set it (example: `3003`).
 
 ## Run Locally
@@ -188,6 +190,14 @@ Request body:
 
 #### GET `/api/auth/users` (Admin only)
 Get all users (password excluded).
+
+### Orders / Stripe Checkout
+
+#### POST `/api/orders/checkout/session`
+Create a Stripe Checkout Session for a 5% prepayment.
+
+#### POST `/api/orders/checkout/confirm`
+Confirm the Stripe session and create a paid order.
 
 Headers:
 ```http

@@ -19,7 +19,8 @@
     "mongoose": "^7.8.8",
     "nodemailer": "^7.0.13",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "stripe": "^20.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

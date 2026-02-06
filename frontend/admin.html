@@ -444,7 +444,7 @@
                                     <td>${UI.formatPrice(order.totalAmount)}</td>
                                     <td>
                                         <select class="form-control" style="width:auto;padding:0.25rem;" onchange="updateOrderStatus('${order._id}', this.value)">
-                                            ${['pending','confirmed','shipped','delivered','cancelled'].map(s => 
+                                            ${['pending','paid','confirmed','shipped','delivered','cancelled'].map(s => 
                                                 `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s}</option>`
                                             ).join('')}
                                         </select>
