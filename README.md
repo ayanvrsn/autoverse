@@ -33,10 +33,22 @@ Create a `.env` file in the project root:
 MONGO_URI=your_mongodb_connection_string
 PORT=3003
 JWT_SECRET=your_long_random_secret
+APP_URL=http://localhost:3003
+EMAIL_USER=your_gmail_address
+EMAIL_PASS=your_gmail_app_password
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:3003/api/auth/google/callback
+FRONTEND_URL=http://localhost:3003/frontend
+STRIPE_SECRET_KEY=your_stripe_secret_key
 ```
 
 Notes:
 - `JWT_SECRET` is required (the server will throw on startup if missing).
+- `EMAIL_USER`/`EMAIL_PASS` are required for email verification and order confirmation codes.
+- `APP_URL` is used to generate email verification links.
+- Google OAuth is enabled only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+- Stripe Checkout is enabled only when `STRIPE_SECRET_KEY` is set.
 - On hosting platforms like Render, `PORT` is provided automatically; locally you can set it (example: `3003`).
 
 ## Run Locally
@@ -98,7 +110,7 @@ Base URL: `/api`
 ### Auth (`/api/auth`)
 
 #### POST `/api/auth/register`
-Create a new user.
+Create a new user and send an email verification link.
 
 Request body:
 ```json
@@ -108,9 +120,8 @@ Request body:
 Response `201`:
 ```json
 {
-  "message": "User registered successfully",
-  "token": "<jwt>",
-  "user": { "id": "<id>", "email": "user@example.com", "role": "USER" }
+  "message": "Registration successful. Please check your email to verify your account.",
+  "user": { "id": "<id>", "email": "user@example.com", "role": "USER", "isVerified": false }
 }
 ```
 
@@ -133,6 +144,10 @@ Response `200`:
 }
 ```
 
+Common errors:
+- `403` if email is not verified yet
+- `400` if account was created through Google and has no password yet
+
 #### GET `/api/auth/me`
 Get the currently logged-in user.
 
@@ -143,16 +158,65 @@ Authorization: Bearer <jwt>
 
 Response `200`:
 ```json
-{ "_id": "<id>", "email": "user@example.com", "role": "USER", "createdAt": "...", "updatedAt": "..." }
+{
+  "id": "<id>",
+  "email": "user@example.com",
+  "name": "John Doe",
+  "role": "USER",
+  "isVerified": true,
+  "hasPassword": false,
+  "googleLinked": true
+}
+```
+
+#### GET `/api/auth/google`
+Start Google OAuth 2.0 flow (redirects to Google consent page).
+
+#### GET `/api/auth/google/callback`
+Google callback endpoint (redirects to `/frontend/login.html` with token in URL hash).
+
+#### POST `/api/auth/set-password` (Authenticated)
+Set a password for the current account (useful for Google-only users).
+
+Headers:
+```http
+Authorization: Bearer <jwt>
+```
+
+Request body:
+```json
+{ "password": "secret123" }
 ```
 
 #### GET `/api/auth/users` (Admin only)
 Get all users (password excluded).
 
+### Orders / Stripe Checkout
+
+#### POST `/api/orders/checkout/session`
+Create a Stripe Checkout Session for a 5% prepayment.
+
+#### POST `/api/orders/checkout/confirm`
+Confirm the Stripe session and create a paid order.
+
 Headers:
 ```http
 Authorization: Bearer <admin-jwt>
 ```
+
+#### GET `/api/auth/verify-email?token=...`
+Verify email by token from the email link.
+
+#### POST `/api/auth/resend-verification`
+Resend verification email.
+
+Request body:
+```json
+{ "email": "user@example.com" }
+```
+
+#### DELETE `/api/auth/users/:id` (Admin only)
+Permanently delete a user account.
 
 ### Cars (`/api/cars`)
 
@@ -301,10 +365,30 @@ Rules:
 - Allowed if the order belongs to the current user, or the user is ADMIN.
 
 #### POST `/api/orders` (Authenticated)
-Create a new order from the current user's cart (checkout).
+Deprecated for checkout flow. Returns a message explaining to use confirmation-code endpoints.
+
+#### POST `/api/orders/checkout/request-code` (Authenticated)
+Send a one-time 6-digit confirmation code to the user's email.
+
+#### POST `/api/orders/checkout/confirm` (Authenticated)
+Confirm order with email code and create order from cart.
+
+Request body:
+```json
+{ "code": "123456" }
+```
 
 #### GET `/api/orders/admin/all` (Admin only)
 List all orders (ADMIN).
+
+#### GET `/api/orders/admin/sales` (Admin only)
+Daily sales analytics.
+
+Optional query params:
+- `from=YYYY-MM-DD`
+- `to=YYYY-MM-DD`
+
+If not provided, defaults to last 7 days.
 
 #### PUT `/api/orders/:id/status` (Admin only)
 Update order status.
@@ -323,6 +407,8 @@ Valid statuses:
 - Set Render environment variables:
   - `MONGO_URI`
   - `JWT_SECRET`
+  - `APP_URL`
+  - `EMAIL_USER`
+  - `EMAIL_PASS`
 - `PORT` is provided by Render automatically.
 - The frontend is served from the same service under `/frontend`.
-

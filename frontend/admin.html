@@ -6,7 +6,7 @@
     <title>Admin Dashboard - AutoVerse</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"> -->
 </head>
 <body>
     
@@ -104,6 +104,13 @@
                         <div class="stat-info">
                             <h4 id="total-orders">0</h4>
                             <p>Orders</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="stat-info">
+                            <h4 id="total-revenue">$0</h4>
+                            <p>Total Spent (Orders)</p>
                         </div>
                     </div>
                 </div>
@@ -319,8 +326,11 @@
                 try {
                     const orders = await OrdersAPI.getAllAdmin();
                     document.getElementById('total-orders').textContent = orders.length;
+                    const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+                    document.getElementById('total-revenue').textContent = UI.formatPrice(totalRevenue);
                     renderOrdersTable(orders);
                 } catch (e) {}
+
             } catch (error) {
                 UI.showToast('Failed to load data', 'error');
             }
@@ -423,17 +433,18 @@
                 <div class="table-responsive">
                     <table>
                         <thead>
-                            <tr><th>Order ID</th><th>User</th><th>Total</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>Order ID</th><th>User</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th></tr>
                         </thead>
                         <tbody>
                             ${orders.map(order => `
                                 <tr>
                                     <td><code>${order._id.slice(-8)}</code></td>
-                                    <td>${order.userId?.email || 'N/A'}</td>
+                                    <td>${order.userId?.email || '<span class="badge badge-danger">Permanently banned</span>'}</td>
+                                    <td>${UI.renderOrderItems(order.items)}</td>
                                     <td>${UI.formatPrice(order.totalAmount)}</td>
                                     <td>
                                         <select class="form-control" style="width:auto;padding:0.25rem;" onchange="updateOrderStatus('${order._id}', this.value)">
-                                            ${['pending','confirmed','shipped','delivered','cancelled'].map(s => 
+                                            ${['pending','paid','confirmed','shipped','delivered','cancelled'].map(s => 
                                                 `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s}</option>`
                                             ).join('')}
                                         </select>
@@ -449,16 +460,26 @@
 
         function renderUsersTable(users) {
             const container = document.getElementById('users-table');
+            const currentUser = Auth.getUser();
             container.innerHTML = `
                 <div class="table-responsive">
                     <table>
-                        <thead><tr><th>Email</th><th>Role</th><th>Created</th></tr></thead>
+                        <thead><tr><th>Email</th><th>Role</th><th>Created</th><th>Actions</th></tr></thead>
                         <tbody>
                             ${users.map(user => `
                                 <tr>
                                     <td>${user.email}</td>
                                     <td><span class="badge ${user.role === 'ADMIN' ? 'badge-danger' : 'badge-primary'}">${user.role}</span></td>
                                     <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                                    <td>
+                                        <button
+                                            class="btn btn-sm btn-danger"
+                                            onclick="deleteUserPermanently('${user._id}', '${user.email}')"
+                                            ${currentUser?.id === user._id ? 'disabled title="You cannot delete yourself"' : ''}
+                                        >
+                                            Permanent Ban
+                                        </button>
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -571,6 +592,17 @@
             try {
                 await OrdersAPI.updateStatus(id, status);
                 UI.showToast('Order status updated', 'success');
+            } catch (error) {
+                UI.showToast(error.message, 'error');
+            }
+        }
+
+        async function deleteUserPermanently(id, email) {
+            if (!confirm(`Permanently ban "${email}"? Account will be deleted forever.`)) return;
+            try {
+                await AuthAPI.deleteUser(id);
+                UI.showToast('User deleted permanently', 'success');
+                loadDashboard();
             } catch (error) {
                 UI.showToast(error.message, 'error');
             }

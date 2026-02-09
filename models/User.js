@@ -8,15 +8,37 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
+    name: {
+      type: String,
+      trim: true,
+    },
     password: {
       type: String,
-      required: true,
+      required: false,
+      default: null,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     role: {
       type: String,
       enum: ['USER', 'ADMIN'],
       default: 'USER',
     },
+    isVerified: { 
+      type: Boolean, 
+      default: false },
+    verificationToken: {
+      type: String
+    },
+    orderVerificationCodeHash: {
+      type: String
+    },
+    orderVerificationExpiresAt: {
+      type: Date
+    }
   },
   { timestamps: true }
 );

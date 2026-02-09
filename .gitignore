@@ -1,2 +1,7 @@
 node_modules
 .env
+.DS_Store
+tmp/pdfs/
+output/pdf/
+firebase-ios-sdk
+package-lock.json

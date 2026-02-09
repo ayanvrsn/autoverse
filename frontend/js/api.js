@@ -3,6 +3,92 @@ const API_BASE_URL =
         ? `${window.location.origin}/api`
         : 'http://localhost:3003/api';
 
+const Theme = {
+    storageKey: 'theme',
+
+    getSavedTheme() {
+        try {
+            const value = localStorage.getItem(this.storageKey);
+            return value === 'dark' || value === 'light' ? value : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    getSystemTheme() {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+    },
+
+    getCurrentTheme() {
+        return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    },
+
+    apply(theme, { persist = true, animate = true } = {}) {
+        const normalized = theme === 'dark' ? 'dark' : 'light';
+        const root = document.documentElement;
+
+        if (animate) {
+            root.classList.add('theme-transition');
+            window.setTimeout(() => {
+                root.classList.remove('theme-transition');
+            }, 320);
+        }
+
+        root.setAttribute('data-theme', normalized);
+        if (persist) {
+            try {
+                localStorage.setItem(this.storageKey, normalized);
+            } catch (e) {
+                // ignore storage write errors
+            }
+        }
+        this.updateToggleButton(normalized);
+    },
+
+    init() {
+        const saved = this.getSavedTheme();
+        this.apply(saved || this.getSystemTheme(), { persist: false, animate: false });
+    },
+
+    toggle() {
+        const next = this.getCurrentTheme() === 'dark' ? 'light' : 'dark';
+        this.apply(next);
+    },
+
+    updateToggleButton(theme) {
+        const button = document.querySelector('.theme-toggle-btn');
+        if (!button) return;
+        const icon = theme === 'dark' ? 'sun' : 'moon';
+        const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
+        button.innerHTML = `<i class="fas fa-${icon}"></i>`;
+    },
+
+    mountToggle() {
+        if (document.querySelector('.theme-toggle-btn')) return;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-toggle-btn';
+        button.addEventListener('click', () => this.toggle());
+
+        const navbarActions = document.querySelector('.navbar-actions');
+        if (navbarActions) {
+            navbarActions.prepend(button);
+        } else {
+            button.classList.add('theme-toggle-floating');
+            document.body.appendChild(button);
+        }
+
+        this.updateToggleButton(this.getCurrentTheme());
+    }
+};
+
+Theme.init();
+
 const Auth = {
     getToken() {
         return localStorage.getItem('token');
@@ -58,14 +144,22 @@ const Auth = {
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const token = Auth.getToken();
+    const timeoutMs = Number.isInteger(options.timeoutMs) ? options.timeoutMs : 20000;
+    const timeoutController = options.signal ? null : new AbortController();
+    const timeoutId = timeoutController
+        ? setTimeout(() => timeoutController.abort(), timeoutMs)
+        : null;
+
+    const { timeoutMs: _timeoutMs, ...restOptions } = options;
 
     const config = {
         headers: {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...options.headers
+            ...restOptions.headers
         },
-        ...options
+        ...restOptions,
+        ...(timeoutController ? { signal: timeoutController.signal } : {})
     };
 
     try {
@@ -78,12 +172,27 @@ async function apiRequest(endpoint, options = {}) {
 
         return data;
     } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out. Please try again.');
+        }
         console.error('API Error:', error);
         throw error;
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
     }
 }
 
 const AuthAPI = {
+    getGoogleLoginUrl(returnTo = null) {
+        const params = new URLSearchParams({ source: 'frontend' });
+        if (returnTo) {
+            params.set('returnTo', returnTo);
+        }
+        return `${API_BASE_URL}/auth/google?${params.toString()}`;
+    },
+
     async login(email, password) {
         const data = await apiRequest('/auth/login', {
             method: 'POST',
@@ -112,8 +221,28 @@ const AuthAPI = {
         return apiRequest('/auth/me');
     },
 
+    async setPassword(password) {
+        return apiRequest('/auth/set-password', {
+            method: 'POST',
+            body: JSON.stringify({ password })
+        });
+    },
+
     async getUsers() {
         return apiRequest('/auth/users');
+    },
+
+    async resendVerification(email) {
+        return apiRequest('/auth/resend-verification', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+    },
+
+    async deleteUser(id) {
+        return apiRequest(`/auth/users/${id}`, {
+            method: 'DELETE'
+        });
     }
 };
 
@@ -221,8 +350,29 @@ const OrdersAPI = {
         });
     },
 
+    async createStripeCheckoutSession() {
+        return apiRequest('/orders/checkout/session', {
+            method: 'POST'
+        });
+    },
+
+    async confirmStripeSession(sessionId) {
+        return apiRequest('/orders/checkout/confirm', {
+            method: 'POST',
+            body: JSON.stringify({ sessionId })
+        });
+    },
+
     async getAllAdmin() {
         return apiRequest('/orders/admin/all');
+    },
+
+    async getSalesByDay(from, to) {
+        const params = new URLSearchParams();
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        const query = params.toString();
+        return apiRequest(`/orders/admin/sales${query ? `?${query}` : ''}`);
     },
 
     async updateStatus(id, status) {
@@ -271,6 +421,48 @@ const UI = {
             currency: 'USD',
             minimumFractionDigits: 0
         }).format(price);
+    },
+
+    escapeHtml(value) {
+        const str = String(value ?? '');
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        };
+        return str.replace(/[&<>"']/g, (ch) => map[ch]);
+    },
+
+    renderOrderItems(items, { showPrice = true } = {}) {
+        if (!Array.isArray(items) || items.length === 0) {
+            return '<span class="text-gray">No items</span>';
+        }
+
+        return `
+            <div class="order-items">
+                ${items.map((item) => {
+                    const car = item?.carId;
+                    const config = item?.configurationId;
+                    const carLabel = (!car || typeof car === 'string')
+                        ? 'Unknown car'
+                        : ([car.brand, car.model, car.year].filter(Boolean).join(' ') || 'Unknown car');
+                    const configLabel = (!config || typeof config === 'string' || !config?.name)
+                        ? null
+                        : String(config.name);
+                    const priceLabel = typeof item?.price === 'number' ? this.formatPrice(item.price) : null;
+
+                    return `
+                        <div class="order-item-row">
+                            <span class="order-item-title">${this.escapeHtml(carLabel)}</span>
+                            ${configLabel ? `<span class="badge">${this.escapeHtml(configLabel)}</span>` : ''}
+                            ${showPrice && priceLabel ? `<span class="order-item-price">${this.escapeHtml(priceLabel)}</span>` : ''}
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
     },
 
     async updateCartBadge() {
@@ -325,6 +517,7 @@ const UI = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    Theme.mountToggle();
     UI.updateNav();
 
     const mobileToggle = document.querySelector('.mobile-toggle');
