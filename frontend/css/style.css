@@ -31,6 +31,24 @@
     --transition: none;
 }
 
+:root[data-theme='dark'] {
+    --light: #0b1220;
+    --dark: #f8fafc;
+    --gray-100: #0f172a;
+    --gray-200: #1e293b;
+    --gray-300: #334155;
+    --gray-400: #64748b;
+    --gray-500: #94a3b8;
+    --gray-600: #cbd5e1;
+    --gray-700: #e2e8f0;
+    --gray-800: #f8fafc;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.35);
+    --shadow-xl: 0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
 
 *, *::before, *::after {
     box-sizing: border-box;
@@ -40,6 +58,13 @@
 
 html {
     scroll-behavior: smooth;
+}
+
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+    transition: background-color 0.28s ease, color 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease !important;
 }
 
 body {
@@ -139,6 +164,7 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--secondary);
 }
 
+
 h1 { font-size: 2.5rem; }
 h2 { font-size: 2rem; }
 h3 { font-size: 1.5rem; }
@@ -207,6 +233,18 @@ h4 { font-size: 1.25rem; }
 .btn-sm {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
+}
+
+.logout-btn {
+    border: 2px solid var(--gray-300);
+    color: var(--gray-700);
+    background: transparent;
+}
+
+.logout-btn:hover {
+    border-color: var(--danger);
+    color: white;
+    background: var(--danger);
 }
 
 .btn-lg {
@@ -292,6 +330,34 @@ h4 { font-size: 1.25rem; }
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.theme-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-full);
+    color: var(--gray-700);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.theme-toggle-floating {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1500;
+    background: var(--secondary);
+    color: white;
+    border-color: transparent;
 }
 
 .cart-icon {
@@ -968,6 +1034,11 @@ body {
     overflow-x: auto;
 }
 
+.3dcat {
+
+}
+
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -1136,6 +1207,81 @@ td {
     justify-content: center;
     font-size: 2.5rem;
     font-weight: 700;
+}
+
+:root[data-theme='dark'] .hero {
+    background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+}
+
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3,
+:root[data-theme='dark'] h4,
+:root[data-theme='dark'] h5,
+:root[data-theme='dark'] h6 {
+    color: var(--gray-800);
+}
+
+:root[data-theme='dark'] .hero h1,
+:root[data-theme='dark'] .hero h2,
+:root[data-theme='dark'] .hero h3,
+:root[data-theme='dark'] .hero p,
+:root[data-theme='dark'] .footer h4,
+:root[data-theme='dark'] .footer p,
+:root[data-theme='dark'] .footer a {
+    color: white;
+}
+
+:root[data-theme='dark'] .navbar,
+:root[data-theme='dark'] .features,
+:root[data-theme='dark'] .form-card,
+:root[data-theme='dark'] .car-gallery,
+:root[data-theme='dark'] .car-info,
+:root[data-theme='dark'] .search-filters,
+:root[data-theme='dark'] .cart-items,
+:root[data-theme='dark'] .cart-summary,
+:root[data-theme='dark'] .sidebar,
+:root[data-theme='dark'] .stat-card,
+:root[data-theme='dark'] .orders-table,
+:root[data-theme='dark'] .users-table,
+:root[data-theme='dark'] .table-responsive,
+:root[data-theme='dark'] .table-container,
+:root[data-theme='dark'] .modal,
+:root[data-theme='dark'] .toast,
+:root[data-theme='dark'] .alert,
+:root[data-theme='dark'] .profile-header,
+:root[data-theme='dark'] .car-card,
+:root[data-theme='dark'] .feature-card {
+    background: #111827;
+    color: var(--gray-700);
+}
+
+:root[data-theme='dark'] .auth-page {
+    background: linear-gradient(135deg, #0b1220 0%, #0f172a 100%) !important;
+}
+
+:root[data-theme='dark'] .form-control,
+:root[data-theme='dark'] .search-input input,
+:root[data-theme='dark'] .filter-select {
+    background: #0f172a;
+    color: var(--gray-700);
+}
+
+:root[data-theme='dark'] .form-control:focus {
+    background: #0f172a;
+}
+
+:root[data-theme='dark'] .logout-btn {
+    border-color: var(--gray-400);
+    color: var(--gray-700);
+}
+
+:root[data-theme='dark'] th {
+    background: #0f172a;
+}
+
+:root[data-theme='dark'] tr:nth-child(even) td {
+    background: #0f172a;
 }
 
 

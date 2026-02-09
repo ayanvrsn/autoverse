@@ -3,6 +3,92 @@ const API_BASE_URL =
         ? `${window.location.origin}/api`
         : 'http://localhost:3003/api';
 
+const Theme = {
+    storageKey: 'theme',
+
+    getSavedTheme() {
+        try {
+            const value = localStorage.getItem(this.storageKey);
+            return value === 'dark' || value === 'light' ? value : null;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    getSystemTheme() {
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+    },
+
+    getCurrentTheme() {
+        return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    },
+
+    apply(theme, { persist = true, animate = true } = {}) {
+        const normalized = theme === 'dark' ? 'dark' : 'light';
+        const root = document.documentElement;
+
+        if (animate) {
+            root.classList.add('theme-transition');
+            window.setTimeout(() => {
+                root.classList.remove('theme-transition');
+            }, 320);
+        }
+
+        root.setAttribute('data-theme', normalized);
+        if (persist) {
+            try {
+                localStorage.setItem(this.storageKey, normalized);
+            } catch (e) {
+                // ignore storage write errors
+            }
+        }
+        this.updateToggleButton(normalized);
+    },
+
+    init() {
+        const saved = this.getSavedTheme();
+        this.apply(saved || this.getSystemTheme(), { persist: false, animate: false });
+    },
+
+    toggle() {
+        const next = this.getCurrentTheme() === 'dark' ? 'light' : 'dark';
+        this.apply(next);
+    },
+
+    updateToggleButton(theme) {
+        const button = document.querySelector('.theme-toggle-btn');
+        if (!button) return;
+        const icon = theme === 'dark' ? 'sun' : 'moon';
+        const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+        button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
+        button.innerHTML = `<i class="fas fa-${icon}"></i>`;
+    },
+
+    mountToggle() {
+        if (document.querySelector('.theme-toggle-btn')) return;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'theme-toggle-btn';
+        button.addEventListener('click', () => this.toggle());
+
+        const navbarActions = document.querySelector('.navbar-actions');
+        if (navbarActions) {
+            navbarActions.prepend(button);
+        } else {
+            button.classList.add('theme-toggle-floating');
+            document.body.appendChild(button);
+        }
+
+        this.updateToggleButton(this.getCurrentTheme());
+    }
+};
+
+Theme.init();
+
 const Auth = {
     getToken() {
         return localStorage.getItem('token');
@@ -431,6 +517,7 @@ const UI = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    Theme.mountToggle();
     UI.updateNav();
 
     const mobileToggle = document.querySelector('.mobile-toggle');
