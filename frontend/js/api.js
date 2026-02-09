@@ -58,14 +58,22 @@ const Auth = {
 async function apiRequest(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const token = Auth.getToken();
+    const timeoutMs = Number.isInteger(options.timeoutMs) ? options.timeoutMs : 20000;
+    const timeoutController = options.signal ? null : new AbortController();
+    const timeoutId = timeoutController
+        ? setTimeout(() => timeoutController.abort(), timeoutMs)
+        : null;
+
+    const { timeoutMs: _timeoutMs, ...restOptions } = options;
 
     const config = {
         headers: {
             'Content-Type': 'application/json',
             ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...options.headers
+            ...restOptions.headers
         },
-        ...options
+        ...restOptions,
+        ...(timeoutController ? { signal: timeoutController.signal } : {})
     };
 
     try {
@@ -78,8 +86,15 @@ async function apiRequest(endpoint, options = {}) {
 
         return data;
     } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out. Please try again.');
+        }
         console.error('API Error:', error);
         throw error;
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
     }
 }
 

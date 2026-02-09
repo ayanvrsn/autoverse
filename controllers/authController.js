@@ -95,17 +95,27 @@ class authController {
             const baseUrl = getAppBaseUrl();
             const verificationLink = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
 
-            await sendEmail(
-                user.email,
-                'Verify your email',
-                `<h2>Welcome to AutoShop</h2>
-                 <p>Click the button below to verify your email:</p>
-                 <a href="${verificationLink}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Verify Email</a>
-                 <p>If you did not create this account, please ignore this email.</p>`
-            );
+            let verificationEmailSent = true;
+            let message = 'Registration successful. Please check your email to verify your account.';
+
+            try {
+                await sendEmail(
+                    user.email,
+                    'Verify your email',
+                    `<h2>Welcome to AutoShop</h2>
+                     <p>Click the button below to verify your email:</p>
+                     <a href="${verificationLink}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Verify Email</a>
+                     <p>If you did not create this account, please ignore this email.</p>`
+                );
+            } catch (emailError) {
+                verificationEmailSent = false;
+                message = 'Account created, but we could not send verification email right now. Please use resend verification later.';
+                console.error('Verification email send error:', emailError.message);
+            }
             
             return res.status(201).json({ 
-                message: 'Registration successful. Please check your email to verify your account.',
+                message,
+                verificationEmailSent,
                 user: buildUserResponse(user)
             });
         } catch (error) {

@@ -122,9 +122,10 @@
             signupBtn.innerHTML = '<span>Creating account...</span> <i class="fas fa-spinner fa-spin"></i>';
 
             try {
-                await AuthAPI.register(email, password);
+                const data = await AuthAPI.register(email, password);
                 
-                successDiv.querySelector('span').textContent = 'Account created. Check your email to verify, then sign in.';
+                successDiv.querySelector('span').textContent =
+                    data?.message || 'Account created. Check your email to verify, then sign in.';
                 successDiv.classList.remove('hidden');
                 
                 setTimeout(() => {
