@@ -96,6 +96,11 @@
         const successDiv = document.getElementById('success-message');
         const signupBtn = document.getElementById('signup-btn');
 
+        function resetSignupButton() {
+            signupBtn.disabled = false;
+            signupBtn.innerHTML = '<span>Create Account</span> <i class="fas fa-arrow-right"></i>';
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -125,17 +130,16 @@
                 const data = await AuthAPI.register(email, password);
                 
                 successDiv.querySelector('span').textContent =
-                    data?.message || 'Account created. Check your email to verify, then sign in.';
+                    data?.message || 'Account created. You can verify your email later from your profile.';
                 successDiv.classList.remove('hidden');
-                
+
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 2200);
             } catch (error) {
                 errorDiv.querySelector('span').textContent = error.message;
                 errorDiv.classList.remove('hidden');
-                signupBtn.disabled = false;
-                signupBtn.innerHTML = '<span>Create Account</span> <i class="fas fa-arrow-right"></i>';
+                resetSignupButton();
             }
         });
     </script>

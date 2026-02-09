@@ -1,6 +1,5 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
-const User = require('../models/User');
 const Stripe = require('stripe');
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -113,14 +112,6 @@ exports.createStripeCheckoutSession = async (req, res) => {
         }
 
         const userId = req.user.id;
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        if (!user.isVerified) {
-            return res.status(403).json({ message: 'Please verify your email before placing an order' });
-        }
 
         const cart = await Cart.findOne({ userId })
             .populate('items.carId')

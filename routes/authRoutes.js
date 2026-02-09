@@ -8,6 +8,15 @@ const { passport, canUseGoogleAuth } = require('../config/passport');
 
 const getAppBaseUrl = () => process.env.APP_URL || `http://localhost:${process.env.PORT || 3003}`;
 const getFrontendBaseUrl = () => (process.env.FRONTEND_URL || `${getAppBaseUrl()}/frontend`).replace(/\/$/, '');
+const ALLOWED_RETURN_TO = new Set(['profile.html', 'catalog.html', 'admin.html', 'set-password.html', 'login.html']);
+
+const sanitizeReturnTo = (value) => {
+    if (!value || typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return ALLOWED_RETURN_TO.has(trimmed) ? trimmed : null;
+};
+
+const encodeOAuthState = (payload) => Buffer.from(JSON.stringify(payload)).toString('base64url');
 
 const ensureGoogleAuthConfigured = (req, res, next) => {
     if (!canUseGoogleAuth) {
@@ -31,7 +40,16 @@ router.post('/login', [
 
 router.get('/google',
     ensureGoogleAuthConfigured,
-    passport.authenticate('google', { scope: ['profile', 'email'], session: false })
+    (req, res, next) => {
+        const returnTo = sanitizeReturnTo(req.query.returnTo);
+        const authOptions = { scope: ['profile', 'email'], session: false };
+
+        if (returnTo) {
+            authOptions.state = encodeOAuthState({ returnTo });
+        }
+
+        return passport.authenticate('google', authOptions)(req, res, next);
+    }
 );
 
 router.get('/google/callback',

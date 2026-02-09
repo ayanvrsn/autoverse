@@ -14,6 +14,27 @@ const generateJwtToken = (id, role) => {
 
 const getAppBaseUrl = () => process.env.APP_URL || `http://localhost:${process.env.PORT || 3003}`;
 const getFrontendBaseUrl = () => process.env.FRONTEND_URL || `${getAppBaseUrl()}/frontend`;
+const ALLOWED_RETURN_TO = new Set(['profile.html', 'catalog.html', 'admin.html', 'set-password.html', 'login.html']);
+
+const sanitizeReturnTo = (value) => {
+    if (!value || typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return ALLOWED_RETURN_TO.has(trimmed) ? trimmed : null;
+};
+
+const parseOAuthState = (state) => {
+    if (!state) return { returnTo: null };
+
+    try {
+        const decoded = Buffer.from(state, 'base64url').toString('utf8');
+        const parsed = JSON.parse(decoded);
+        return {
+            returnTo: sanitizeReturnTo(parsed?.returnTo)
+        };
+    } catch (error) {
+        return { returnTo: null };
+    }
+};
 
 const normalizeGoogleProfile = (profile) => ({
     email: profile?.emails?.[0]?.value?.toLowerCase(),
@@ -25,12 +46,17 @@ const buildOAuthRedirect = ({
     token,
     isNewUser = false,
     needsPassword = false,
-    error = null
+    error = null,
+    returnTo = null
 } = {}) => {
     const loginUrl = new URL('login.html', `${getFrontendBaseUrl().replace(/\/$/, '')}/`);
+    const safeReturnTo = sanitizeReturnTo(returnTo);
 
     if (error) {
         loginUrl.searchParams.set('error', error);
+        if (safeReturnTo) {
+            loginUrl.searchParams.set('returnTo', safeReturnTo);
+        }
         return loginUrl.toString();
     }
 
@@ -40,6 +66,9 @@ const buildOAuthRedirect = ({
         isNewUser: isNewUser ? '1' : '0',
         needsPassword: needsPassword ? '1' : '0'
     });
+    if (safeReturnTo) {
+        hashParams.set('returnTo', safeReturnTo);
+    }
 
     return `${loginUrl.toString()}#${hashParams.toString()}`;
 };
@@ -80,42 +109,19 @@ class authController {
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            const verificationToken = crypto.randomBytes(32).toString('hex');
             
             const user = new User({
                 email: email.toLowerCase(),
                 password: hashedPassword,
                 role: 'USER',
                 isVerified: false,
-                verificationToken
+                verificationToken: null
             });
             
             await user.save();
-
-            const baseUrl = getAppBaseUrl();
-            const verificationLink = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
-
-            let verificationEmailSent = true;
-            let message = 'Registration successful. Please check your email to verify your account.';
-
-            try {
-                await sendEmail(
-                    user.email,
-                    'Verify your email',
-                    `<h2>Welcome to AutoShop</h2>
-                     <p>Click the button below to verify your email:</p>
-                     <a href="${verificationLink}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">Verify Email</a>
-                     <p>If you did not create this account, please ignore this email.</p>`
-                );
-            } catch (emailError) {
-                verificationEmailSent = false;
-                message = 'Account created, but we could not send verification email right now. Please use resend verification later.';
-                console.error('Verification email send error:', emailError.message);
-            }
             
             return res.status(201).json({ 
-                message,
-                verificationEmailSent,
+                message: 'Registration successful. You can verify your email later from your profile.',
                 user: buildUserResponse(user)
             });
         } catch (error) {
@@ -145,12 +151,6 @@ class authController {
             if (!isPasswordValid) {
                 return res.status(400).json({ 
                     message: 'Invalid email or password' 
-                });
-            }
-
-            if (!user.isVerified) {
-                return res.status(403).json({
-                    message: 'Please verify your email before logging in'
                 });
             }
 
@@ -249,11 +249,12 @@ class authController {
 
     async googleCallback(req, res) {
         try {
+            const { returnTo } = parseOAuthState(req.query.state);
             const profile = req.user;
             const { email, googleId, name } = normalizeGoogleProfile(profile);
 
             if (!email || !googleId) {
-                return res.redirect(buildOAuthRedirect({ error: 'google_profile_incomplete' }));
+                return res.redirect(buildOAuthRedirect({ error: 'google_profile_incomplete', returnTo }));
             }
 
             let user = await User.findOne({
@@ -277,7 +278,7 @@ class authController {
                 });
             } else {
                 if (user.googleId && user.googleId !== googleId) {
-                    return res.redirect(buildOAuthRedirect({ error: 'google_account_conflict' }));
+                    return res.redirect(buildOAuthRedirect({ error: 'google_account_conflict', returnTo }));
                 }
 
                 user.googleId = googleId;
@@ -296,11 +297,13 @@ class authController {
             return res.redirect(buildOAuthRedirect({
                 token,
                 isNewUser,
-                needsPassword
+                needsPassword,
+                returnTo
             }));
         } catch (error) {
             console.error('Google login error:', error);
-            return res.redirect(buildOAuthRedirect({ error: 'google_login_failed' }));
+            const { returnTo } = parseOAuthState(req.query.state);
+            return res.redirect(buildOAuthRedirect({ error: 'google_login_failed', returnTo }));
         }
     }
 

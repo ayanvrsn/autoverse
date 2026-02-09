@@ -78,6 +78,16 @@
                 </div>
             </div>
 
+            <div class="table-container mt-4">
+                <div class="table-header">
+                    <h3>Account Settings</h3>
+                </div>
+                <div style="padding: 1rem 1.5rem 1.5rem;">
+                    <div id="account-status" class="mb-2 text-gray">Loading account status...</div>
+                    <div id="account-actions" style="display:flex; gap:0.75rem; flex-wrap:wrap;"></div>
+                </div>
+            </div>
+
             
             <div class="table-container mt-4">
                 <div class="table-header">
@@ -107,14 +117,16 @@
             window.location.href = 'login.html';
         }
 
+        let currentUser = null;
+
         function loadUserInfo() {
-            const user = Auth.getUser();
-            if (user) {
-                const email = user.email || 'User';
-                document.getElementById('user-email').textContent = email;
-                document.getElementById('user-avatar').textContent = email.charAt(0).toUpperCase();
-                document.getElementById('user-role').textContent = user.role === 'ADMIN' ? 'Administrator' : 'Member';
-            }
+            const user = currentUser || Auth.getUser();
+            if (!user) return;
+
+            const email = user.email || 'User';
+            document.getElementById('user-email').textContent = email;
+            document.getElementById('user-avatar').textContent = email.charAt(0).toUpperCase();
+            document.getElementById('user-role').textContent = user.role === 'ADMIN' ? 'Administrator' : 'Member';
         }
 
         async function loadCartCount() {
@@ -124,6 +136,82 @@
                 document.getElementById('cart-items-count').textContent = count;
             } catch (e) {
                 document.getElementById('cart-items-count').textContent = '0';
+            }
+        }
+
+        function renderAccountSettings() {
+            const statusEl = document.getElementById('account-status');
+            const actionsEl = document.getElementById('account-actions');
+            const user = currentUser || Auth.getUser();
+
+            if (!user) {
+                statusEl.textContent = 'Could not load account status.';
+                actionsEl.innerHTML = '';
+                return;
+            }
+
+            const emailStatusBadge = user.isVerified
+                ? '<span class="badge badge-success">Verified</span>'
+                : '<span class="badge badge-warning">Not verified</span>';
+            const googleStatusBadge = user.googleLinked
+                ? '<span class="badge badge-success">Connected</span>'
+                : '<span class="badge badge-primary">Not connected</span>';
+
+            statusEl.innerHTML = `
+                <div class="mb-1">Email verification: ${emailStatusBadge}</div>
+                <div>Google account: ${googleStatusBadge}</div>
+            `;
+
+            const actions = [];
+            if (!user.isVerified) {
+                actions.push(`
+                    <button class="btn btn-outline btn-sm" id="verify-email-btn">
+                        <i class="fas fa-envelope"></i> Verify Email
+                    </button>
+                `);
+            }
+            if (!user.googleLinked) {
+                actions.push(`
+                    <button class="btn btn-outline btn-sm" id="connect-google-btn">
+                        <i class="fab fa-google"></i> Connect Google
+                    </button>
+                `);
+            }
+
+            actionsEl.innerHTML = actions.length ? actions.join('') : '<span class="text-gray">No pending account actions.</span>';
+
+            const verifyBtn = document.getElementById('verify-email-btn');
+            if (verifyBtn) {
+                verifyBtn.addEventListener('click', async () => {
+                    verifyBtn.disabled = true;
+                    verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                    try {
+                        await AuthAPI.resendVerification(user.email);
+                        UI.showToast('Verification email sent.', 'success');
+                    } catch (error) {
+                        UI.showToast(error.message, 'error');
+                    } finally {
+                        verifyBtn.disabled = false;
+                        verifyBtn.innerHTML = '<i class="fas fa-envelope"></i> Verify Email';
+                    }
+                });
+            }
+
+            const connectGoogleBtn = document.getElementById('connect-google-btn');
+            if (connectGoogleBtn) {
+                connectGoogleBtn.addEventListener('click', () => {
+                    window.location.href = AuthAPI.getGoogleLoginUrl('profile.html');
+                });
+            }
+        }
+
+        async function refreshUserProfile() {
+            try {
+                const me = await AuthAPI.getMe();
+                currentUser = me;
+                Auth.setUser(me);
+            } catch (error) {
+                Auth.logout();
             }
         }
 
@@ -196,9 +284,13 @@
             }
         }
 
-        loadUserInfo();
-        loadCartCount();
-        loadOrders();
+        (async () => {
+            await refreshUserProfile();
+            loadUserInfo();
+            renderAccountSettings();
+            loadCartCount();
+            loadOrders();
+        })();
     </script>
 </body>
 </html>

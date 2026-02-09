@@ -99,8 +99,12 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 const AuthAPI = {
-    getGoogleLoginUrl() {
-        return `${API_BASE_URL}/auth/google?source=frontend`;
+    getGoogleLoginUrl(returnTo = null) {
+        const params = new URLSearchParams({ source: 'frontend' });
+        if (returnTo) {
+            params.set('returnTo', returnTo);
+        }
+        return `${API_BASE_URL}/auth/google?${params.toString()}`;
     },
 
     async login(email, password) {

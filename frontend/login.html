@@ -78,6 +78,11 @@
         const errorDiv = document.getElementById('error-message');
         const loginBtn = document.getElementById('login-btn');
         const googleBtn = document.getElementById('google-login-btn');
+        const ALLOWED_RETURN_TO = new Set(['profile.html', 'catalog.html', 'admin.html', 'set-password.html', 'login.html']);
+
+        function sanitizeReturnTo(value) {
+            return ALLOWED_RETURN_TO.has(value) ? value : null;
+        }
 
         function redirectByRole() {
             if (Auth.isAdmin()) {
@@ -102,6 +107,7 @@
             const { queryParams, hashParams } = parseOAuthParams();
             const token = hashParams.get('token');
             const oauthError = queryParams.get('error');
+            const returnTo = sanitizeReturnTo(hashParams.get('returnTo') || queryParams.get('returnTo'));
 
             if (oauthError) {
                 const errorMap = {
@@ -135,6 +141,11 @@
 
             if (isNewUser && needsPassword) {
                 window.location.href = 'set-password.html';
+                return true;
+            }
+
+            if (returnTo) {
+                window.location.href = returnTo;
                 return true;
             }
 
